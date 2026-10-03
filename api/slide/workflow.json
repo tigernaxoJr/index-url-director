@@ -1,0 +1,53 @@
+{
+  "version": "1.0.0",
+  "steps": [
+    {
+      "id": "init",
+      "title": "初始化專案",
+      "command": "/slide-init",
+      "description": "下載並解壓 Slidev 範本，初始化 slides.md 與專案配置",
+      "actions": [
+        { "id": "unpack", "target": "project", "transitions": [{ "to": "initialized" }] }
+      ]
+    },
+    {
+      "id": "outline",
+      "title": "大綱與分頁規劃",
+      "command": "/slide-outline",
+      "description": "根據簡報主題與受眾，規劃簡報結構、頁數、每頁核心資訊與視覺形式",
+      "checkpoint": true,
+      "actions": [
+        { "id": "write_outline", "target": "project", "transitions": [{ "from": ["initialized"], "to": "outlined" }] }
+      ]
+    },
+    {
+      "id": "draft",
+      "title": "撰寫簡報文案",
+      "command": "/slide-draft",
+      "description": "編寫 slides.md 各頁內文、標題、講者備忘錄，選配 Slidev 原生 layout 版型",
+      "checkpoint": true,
+      "actions": [
+        { "id": "write_slides", "target": "project", "transitions": [{ "from": ["outlined"], "to": "drafted" }] }
+      ]
+    },
+    {
+      "id": "visual",
+      "title": "視覺圖表與 3D 注入",
+      "command": "/slide-visual",
+      "description": "在簡報中繪製 SVG 向量架構圖、流程圖、Iconify 圖示，並適度嵌入 Three.js / WebGL 3D 組件",
+      "checkpoint": true,
+      "actions": [
+        { "id": "enhance_visuals", "target": "project", "transitions": [{ "from": ["drafted"], "to": "visualized" }] }
+      ]
+    },
+    {
+      "id": "export",
+      "title": "匯出向量 PDF",
+      "command": "/slide-export",
+      "description": "調用 Slidev CLI 匯出高解析向量 PDF (output/slides.pdf)",
+      "actions": [
+        { "id": "export_pdf", "target": "project", "transitions": [{ "from": ["visualized", "drafted"], "to": "exported" }] }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,301 @@
+{
+  "name": "product-video",
+  "specVersion": "1.0.0",
+  "zip": {
+    "url": "https://aofa.tigernaxo.com/api/templates/product-video.zip",
+    "sha256": "986fe18794fe9c10df242ce4f08c10022a5999f4944d6ea4a528bb73cb242ae2",
+    "size": 5307305
+  },
+  "files": [
+    {
+      "path": ".claude/commands/video-analyze.md",
+      "sha256": "0c8c6225d524e2f7a69e4853eb36bb3027148b57ed5f2fa7e1da6c7fa704fbfb",
+      "size": 457
+    },
+    {
+      "path": ".claude/commands/video-approve.md",
+      "sha256": "ff49545bc5271471064522cfc3a4cd84a01c10d0f50a0c973c365d0aeebc5d3b",
+      "size": 312
+    },
+    {
+      "path": ".claude/commands/video-assemble.md",
+      "sha256": "fcc10e6fa1eaa55bf3b05930cd34a1e7bbb6600a4f2e4835a8ebad2df2880491",
+      "size": 430
+    },
+    {
+      "path": ".claude/commands/video-design.md",
+      "sha256": "a399ecf79e6eddd6cf5d902361771a8182d7a54fe8fa688d5eb8afce04cf1b33",
+      "size": 448
+    },
+    {
+      "path": ".claude/commands/video-scene.md",
+      "sha256": "da9b80dcd0b26cb0ec4fe82e50428919f7d52e9cb3100e48f8c027498ff92c28",
+      "size": 548
+    },
+    {
+      "path": ".claude/commands/video-status.md",
+      "sha256": "4b25c52cf6321103a4334eb4b4ea0e9d7cfe308d8ff726262b73d006f0ce49f8",
+      "size": 248
+    },
+    {
+      "path": ".claude/commands/video-story.md",
+      "sha256": "2da587c481f37a044b5ea14c2f7c246928bd56eaa3abd192c0545b6063e13767",
+      "size": 463
+    },
+    {
+      "path": ".claude/commands/video-storyboard.md",
+      "sha256": "8480a4b9c2893427d7f602cd39dd2e38dc257dad1eabd98afc24c4c7ed2352da",
+      "size": 414
+    },
+    {
+      "path": ".claude/commands/video-sync.md",
+      "sha256": "f85f25b2381d6b8167cc6c62af8501167a7ab3a77be53996d0b2eff0c035cb16",
+      "size": 397
+    },
+    {
+      "path": ".claude/commands/video-translate.md",
+      "sha256": "f493be76446557e346945969b4287aeae1f9df53e1ae0036b2d64acd6738f7db",
+      "size": 541
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "a968101d33b7d01b3ee82d024c19d9fc6e05ad443e8bfc4d41e3acef28927b19",
+      "size": 108
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "96c6f3e860c0c0ffdc888820e08f644dbc7b4f3cdd3887c029a35649a6974eaf",
+      "size": 11349
+    },
+    {
+      "path": "CLAUDE.md",
+      "sha256": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
+      "size": 11
+    },
+    {
+      "path": "README.md",
+      "sha256": "3ad2d98420dc5631e6ff606ec2d51634192a2ffb630639432acd6acc5eb394c2",
+      "size": 2506
+    },
+    {
+      "path": "package.json",
+      "sha256": "21716982eb90de68f7ffea8b402f00c468073e1f8740d1d9126da622c75d9d19",
+      "size": 853
+    },
+    {
+      "path": "pnpm-workspace.yaml",
+      "sha256": "f84922dbac8862d7daa00528da57fe9d80ff2c431b7862f58be3676763243987",
+      "size": 170
+    },
+    {
+      "path": "schemas/activity.schema.json",
+      "sha256": "10b66bfdce893790e06b2ea54cac5231a9a1c7523052ea1380c705037aac36a7",
+      "size": 1377
+    },
+    {
+      "path": "schemas/common.schema.json",
+      "sha256": "b46156e12e4be8eb0b03bfecbc77b07a22293e5c5cd1b5bf9fbf8bf8e96b6135",
+      "size": 1772
+    },
+    {
+      "path": "schemas/project.schema.json",
+      "sha256": "0125c6389830ed56a436f77f9ff123f504b76e6a9df099831f1f8eed9ccb6713",
+      "size": 10597
+    },
+    {
+      "path": "schemas/scene.schema.json",
+      "sha256": "a0e1d16f596693b9ec3f4109b9d1ab495dc5df597be2d0c8abe2668710f15ca0",
+      "size": 14232
+    },
+    {
+      "path": "schemas/workflow.json",
+      "sha256": "57c037cda1be4b1344efc115cb6609a7e0b23bbdb15403deaaf23cfe6cac905a",
+      "size": 20906
+    },
+    {
+      "path": "schemas/workflow.schema.json",
+      "sha256": "bb615a92fa1f6435b6f21dafbc5d4e857d6c995419da526410b1374b9085b55b",
+      "size": 6019
+    },
+    {
+      "path": "scripts/assemble.mjs",
+      "sha256": "ef0c54171fa6294b8cd8d301883f56c3001a4fd5549bf32ac572e79cc5ab547f",
+      "size": 7535
+    },
+    {
+      "path": "scripts/capture.mjs",
+      "sha256": "6f5fd93e3df607f578f042af28d28cf0d2cdd0fde5c5e47119bb8346bf76b570",
+      "size": 12072
+    },
+    {
+      "path": "scripts/companion.mjs",
+      "sha256": "8278b9bddfc84388a24635fb5e5e089b9add2606a165daca4a4ba7b035e85cf9",
+      "size": 1260
+    },
+    {
+      "path": "scripts/lib/browser.mjs",
+      "sha256": "339cc2b6b124c6195f9810e01de482e328504592375455b1042fdb42c84227c7",
+      "size": 1151
+    },
+    {
+      "path": "scripts/lib/cli.mjs",
+      "sha256": "5d4d2c4a28112044994d5ffec784429fc233bc8c45b24bed38285bfb66b466d6",
+      "size": 1187
+    },
+    {
+      "path": "scripts/lib/companion.mjs",
+      "sha256": "e415392f92efb49e8c08be21cd5c7e3fe39bc8f9ec0ddf1572dda1cf60269106",
+      "size": 7427
+    },
+    {
+      "path": "scripts/lib/core.mjs",
+      "sha256": "f91901f673ffc77c94027a65be41c03a25bdfce3bf523fd8fd5446d58a6a74d6",
+      "size": 8361
+    },
+    {
+      "path": "scripts/lib/hash.mjs",
+      "sha256": "377592b520b8dee01e0a2dc20b82a09abfd15e3c421b9d82318b584735d8b6e1",
+      "size": 2143
+    },
+    {
+      "path": "scripts/lib/io.mjs",
+      "sha256": "3c019b1d030ee12d9c8a3766097edb409dd5d8b46dd20b9c0410f3ddcb7db7bc",
+      "size": 1779
+    },
+    {
+      "path": "scripts/lib/login.mjs",
+      "sha256": "78305b6ae1c36fd616151626d7c213578d291a630e9fa4f99294a39f9213fa7a",
+      "size": 3587
+    },
+    {
+      "path": "scripts/lib/media.mjs",
+      "sha256": "05d1c5b60a818602b17d073b36f56d003f6486fe26084a32f4e0a9f65808c57e",
+      "size": 7812
+    },
+    {
+      "path": "scripts/lib/narration.mjs",
+      "sha256": "c08528c1c1f9eb136a501b9f756569c8d7a5839f9a3fb14d36d52a4a7ff1f158",
+      "size": 5169
+    },
+    {
+      "path": "scripts/lib/project.mjs",
+      "sha256": "72313878ac79f31922fab7fba14b85128320989ea171de63a38a2c43ba528f86",
+      "size": 3228
+    },
+    {
+      "path": "scripts/lib/render-html.mjs",
+      "sha256": "47b7c20214ea8228fe37c69aa8689ffa4ee82aa0e88dc1117fc712d5fe7dca1d",
+      "size": 6850
+    },
+    {
+      "path": "scripts/lib/runner.mjs",
+      "sha256": "11100e9b593c5225263c310fcb53fe36712cf787c56f58846bc612859afdcc43",
+      "size": 5137
+    },
+    {
+      "path": "scripts/lib/scene-plan.mjs",
+      "sha256": "6809b62385db17acb68813ddafee3e266068fee4dd3b0ce0effe3718d74aae74",
+      "size": 5339
+    },
+    {
+      "path": "scripts/lib/schema.mjs",
+      "sha256": "65901bad88a34d4a62a9d676405a9b3042cecf33169fd0c11e73a470a6a870c8",
+      "size": 1501
+    },
+    {
+      "path": "scripts/lib/serve.mjs",
+      "sha256": "4c440028c6d7cb1076067edc8d84ea30d608227d016f51add2e32b75d5481efb",
+      "size": 3028
+    },
+    {
+      "path": "scripts/lib/status.mjs",
+      "sha256": "94381cae9dbba0433252294609e6176325b23385dd166d1908691e38ee1be295",
+      "size": 2107
+    },
+    {
+      "path": "scripts/lib/timeline.mjs",
+      "sha256": "5564558094924e007fa5705f3c89c403fec28f1909b76483970b2fb5f200f3dc",
+      "size": 9448
+    },
+    {
+      "path": "scripts/lib/tts-providers.mjs",
+      "sha256": "c71a2d08347c89b4f0245ce9fdba94a96c975f5e53c408d0ea2d2a825f880928",
+      "size": 4801
+    },
+    {
+      "path": "scripts/lib/validate.mjs",
+      "sha256": "5bca8cac74bdfe1225b9dac9100bdd03d130d7872e114e9f90228a6a2ee11f97",
+      "size": 6037
+    },
+    {
+      "path": "scripts/login.mjs",
+      "sha256": "499d33a1e243681e034cc433a30346dcca189a5eae70aab0c47f875398ee3100",
+      "size": 3914
+    },
+    {
+      "path": "scripts/render-scene.mjs",
+      "sha256": "68c0f000a9c74ae98f4b2a4912372a9aa81034cd5cad235286a499f2e832513a",
+      "size": 5732
+    },
+    {
+      "path": "scripts/state.mjs",
+      "sha256": "93f35cbc593a1549d4c8e79a6070527288dad2d918b3c4714e0c8c6a0589f45e",
+      "size": 6814
+    },
+    {
+      "path": "scripts/tts.mjs",
+      "sha256": "627186a7f6f1264746908c562f407507be2d9bb4539841e9bc627fe1a05178d3",
+      "size": 8560
+    },
+    {
+      "path": "scripts/validate.mjs",
+      "sha256": "24298f280703b89e22b5aa16e1f4d5d6bc4e3b9093601d34d31d2efc5a6fabdc",
+      "size": 2895
+    },
+    {
+      "path": "src/fonts/JetBrainsMono-Regular.ttf",
+      "sha256": "e6fd0d7e91550b3ed2b735d4312474362c4716edc4fc0577a0f61ed782d5aed1",
+      "size": 270224
+    },
+    {
+      "path": "src/fonts/NotoSansTC-Bold.otf",
+      "sha256": "55420b259eb119bf5f2a0aadba10cf9d736c12d64ab93e78546d69ef5f43558b",
+      "size": 5839972
+    },
+    {
+      "path": "src/fonts/OFL-JetBrainsMono.txt",
+      "sha256": "a76abf002c49097d146e86740a3105a5d00450b1592e820a1109a8c5680cd697",
+      "size": 4399
+    },
+    {
+      "path": "src/fonts/OFL-NotoSansTC.txt",
+      "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+      "size": 4301
+    },
+    {
+      "path": "src/html/player.js",
+      "sha256": "86d5b3e6423f5f94c686909cbc332ba3f69782f1cfd83e0c58f9563565eb0b43",
+      "size": 5815
+    },
+    {
+      "path": "src/lib/motion.js",
+      "sha256": "e78c2fcdcf548e9c19e842474d556b5f1f0b8d2f6bfda57fab3a1972e2591b6a",
+      "size": 7151
+    },
+    {
+      "path": "src/lib/rig.js",
+      "sha256": "0edc9c576ac92741f065011ee0c784e1ce8716c9848d6b736f43f2c3279c530e",
+      "size": 4629
+    },
+    {
+      "path": "tsconfig.json",
+      "sha256": "1fdca6d1486f15fc04fa477c6b96d4ecc7aafb6da9a652c7d76c6331593d8db7",
+      "size": 268
+    },
+    {
+      "path": "video.project.json",
+      "sha256": "e559a875cc698b2eb45d6b95d56cf3b0499416ed39549b38b353cf2f58b3bdab",
+      "size": 1054
+    }
+  ]
+}

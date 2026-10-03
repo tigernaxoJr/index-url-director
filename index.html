@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agent Studio</title>
+    <script>
+      // Companions from projects made before the Video workbench moved to /video/ print pairing links
+      // to the site root; forward them (the hash carries the token and never reaches the server).
+      if (/[#&]pair=/.test(location.hash)) location.replace('./video/' + location.hash)
+    </script>
+    <script type="module" crossorigin src="/assets/index-DqBLl0IO.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-iAScc6Yj.css">
+  </head>
+  <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <main class="mx-auto max-w-3xl px-4 py-12">
+      <h1 class="text-2xl font-semibold tracking-tight">Agent Studio</h1>
+      <p class="mt-2 text-sm text-slate-500">選一個功能開始。每個功能是獨立的頁面，只使用自己的範本與設定。</p>
+      <!-- To add a feature: add a card here and an apps/<slug>/ front-end. -->
+      <ul class="mt-8 grid gap-4 sm:grid-cols-2">
+        <li>
+          <a href="./video/" class="block rounded-xl border border-slate-200 bg-white p-5 shadow-xs hover:border-sky-500 dark:border-slate-800 dark:bg-slate-900">
+            <h2 class="font-semibold">Video</h2>
+            <p class="mt-1 text-sm text-slate-500">用 Coding Agent 製作產品介紹與故事動畫影片。</p>
+          </a>
+        </li>
+        <li>
+          <a href="./slide/" class="block rounded-xl border border-slate-200 bg-white p-5 shadow-xs hover:border-sky-500 dark:border-slate-800 dark:bg-slate-900">
+            <h2 class="font-semibold">Slide Studio</h2>
+            <p class="mt-1 text-sm text-slate-500">用 Slidev 與 Coding Agent（HTML、SVG、Three.js）製作高質感簡報並輸出向量 PDF。</p>
+          </a>
+        </li>
+      </ul>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "workflow.schema.json",
+  "title": "workflow.json",
+  "description": "機器可讀的工作流程定義（SPEC §6）。Agent、UI 與 Companion 依此判斷下一步。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["specVersion", "gates", "steps", "operations", "derivedProjectStatus"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "specVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "gates": {
+      "description": "執行特定動作前必須成立的條件（使用者同意、授權確認等）。",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/gate" }
+    },
+    "steps": {
+      "description": "主流程，依陣列順序執行。",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/step" }
+    },
+    "operations": {
+      "description": "可隨時執行、不屬於線性主流程的操作。",
+      "type": "array",
+      "items": { "$ref": "#/$defs/step" }
+    },
+    "derivedProjectStatus": {
+      "description": "由 scene 狀態推導 project.status 的規則，依序比對，第一條成立者生效。僅在 scenes 非空且 project.status 不是 failed 時套用；state.mjs 每次寫入 scene 後依此重算。",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["when", "status"],
+        "properties": {
+          "when": { "type": "string", "minLength": 1 },
+          "status": { "$ref": "project.schema.json#/$defs/projectStatus" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check", "blocks", "ask", "record"],
+      "properties": {
+        "check": { "description": "成立條件（以專案檔欄位描述）。", "type": "string" },
+        "appliesWhen": { "description": "只有此條件成立時才需要檢查。", "type": "string" },
+        "blocks": {
+          "description": "gate 未成立時不得執行的 pnpm script。",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "ask": { "description": "要向使用者說明並取得確認的內容。", "type": "string" },
+        "record": { "description": "確認後寫入的欄位。", "type": "string" },
+        "onDecline": { "type": "string" }
+      }
+    },
+    "pathRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "path": { "description": "相對專案根目錄；{dir} 代表 scene 目錄。", "type": "string" },
+        "optional": { "type": "boolean", "default": false },
+        "note": { "type": "string" }
+      }
+    },
+    "transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target", "to"],
+      "properties": {
+        "target": { "enum": ["project", "scene"] },
+        "from": { "type": "array", "items": { "type": "string" } },
+        "to": { "type": "string" },
+        "when": { "type": "string" }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "do"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "do": { "description": "動作說明；以 `pnpm run` 開頭者為必須執行的指令。", "type": "string" },
+        "when": { "type": "string" },
+        "transitions": { "type": "array", "items": { "$ref": "#/$defs/transition" } }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "title", "command", "scope", "actions"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "title": { "type": "string" },
+        "command": {
+          "description": "便利指令名稱（SPEC §8.3）；各 Agent 的實際格式由 templates/commands 產生。",
+          "type": "string",
+          "pattern": "^/video-[a-z]+$"
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "required"],
+            "properties": {
+              "name": { "type": "string" },
+              "required": { "type": "boolean" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "kinds": {
+          "description": "只適用於這些 project.kind；省略時適用於所有類型。",
+          "type": "array",
+          "items": { "enum": ["product", "story"] },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "scope": { "description": "project：整個專案執行一次；scene：對每個指定 scene 各自執行。", "enum": ["project", "scene"] },
+        "requires": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "projectStatus": { "type": "array", "items": { "$ref": "project.schema.json#/$defs/projectStatus" } },
+            "sceneStatus": { "type": "array", "items": { "$ref": "scene.schema.json#/$defs/sceneStatus" } },
+            "gates": { "type": "array", "items": { "type": "string" } },
+            "other": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "skipWhen": { "type": "array", "items": { "type": "string" } },
+        "reads": { "type": "array", "items": { "$ref": "#/$defs/pathRef" } },
+        "writes": { "type": "array", "items": { "$ref": "#/$defs/pathRef" } },
+        "actions": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/action" } },
+        "checkpoint": {
+          "description": "完成後必須停下等待使用者確認的內容；null 表示不需停下。",
+          "type": ["string", "null"]
+        },
+        "guide": { "description": "Skill 內的詳細說明位置。", "type": "string" }
+      }
+    }
+  }
+}

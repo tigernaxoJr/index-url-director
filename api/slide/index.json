@@ -1,0 +1,17 @@
+{
+  "specVersion": "1.0.0",
+  "siteUrl": "",
+  "workflow": "/api/slide/workflow.json",
+  "schemas": {
+    "project": "/api/slide/schemas/project.schema.json",
+    "activity": "/api/slide/schemas/activity.schema.json"
+  },
+  "skill": "/api/slide/skills/slidev-deck.zip",
+  "skillDocs": "/api/slide/skills/slidev-deck/SKILL.md",
+  "template": "/api/slide/templates/slidev-deck.zip",
+  "templateManifest": "/api/slide/templates/slidev-deck/manifest.json",
+  "checksums": {
+    "skill": "f49c937baf3362dc79f89553b9afdf3bc52c60694783f75a7d127fdaac1c30f4",
+    "template": "9b052f868628dcf6b1b86e2bf19ae6fd724cc1234bffa128562322e8afb8e9cf"
+  }
+}

@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "project.schema.json",
+  "title": "video.project.json",
+  "description": "專案層級定義與 scene 播放順序。scene 內容與狀態存於各自的 scene.json（SPEC §4.1）。",
+  "type": "object",
+  "$ref": "common.schema.json#/$defs/extensions",
+  "unevaluatedProperties": false,
+  "required": ["specVersion", "project", "scenes", "status", "updatedAt", "updatedBy"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "specVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "project": { "$ref": "#/$defs/project" },
+    "scenes": {
+      "description": "陣列順序即影片播放順序。",
+      "type": "array",
+      "items": { "$ref": "#/$defs/sceneRef" }
+    },
+    "status": { "$ref": "#/$defs/projectStatus" },
+    "updatedAt": { "$ref": "common.schema.json#/$defs/timestamp" },
+    "updatedBy": { "$ref": "common.schema.json#/$defs/updatedBy" }
+  },
+  "allOf": [
+    {
+      "description": "分鏡產生後至少要有一個 scene。",
+      "if": {
+        "properties": { "status": { "enum": ["script_generated", "producing", "ready_to_assemble", "completed"] } }
+      },
+      "then": {
+        "properties": { "scenes": { "minItems": 1 } }
+      }
+    }
+  ],
+  "$defs": {
+    "projectStatus": {
+      "description": "SPEC §4.5。",
+      "enum": ["initialized", "analyzed", "designed", "script_generated", "producing", "ready_to_assemble", "completed", "failed"]
+    },
+    "sceneRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "dir"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/sceneId" },
+        "dir": {
+          "description": "scene 目錄，格式 scenes/{三位數}-{slug}。目錄編號為建立時的序號，不代表目前順序。",
+          "type": "string",
+          "pattern": "^scenes/\\d{3}-[a-z0-9]+(-[a-z0-9]+)*$"
+        }
+      }
+    },
+    "project": {
+      "type": "object",
+      "$ref": "common.schema.json#/$defs/extensions",
+      "unevaluatedProperties": false,
+      "required": ["id", "name", "sources", "language", "format", "tts"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "kind": {
+          "description": "影片類型：product = 產品介紹（Skill product-video）；story = 把故事做成 SVG 動畫影片（Skill story-video）。",
+          "enum": ["product", "story"],
+          "default": "product"
+        },
+        "sources": { "$ref": "#/$defs/sources" },
+        "cast": {
+          "description": "故事的角色與各自的聲音（kind 為 story 時使用）。script.md 中以【name】開頭的行由該角色說；其餘為旁白，用 project.tts。",
+          "type": "array",
+          "items": { "$ref": "#/$defs/castMember" }
+        },
+        "targetAudience": { "type": "string" },
+        "durationAdjust": {
+          "description": "製作中發現某段太趕時：auto = Agent 可自行在限度內調整 scene 長度並事後回報；ask = 每次先詢問使用者。",
+          "enum": ["auto", "ask"],
+          "default": "ask"
+        },
+        "customMotion": {
+          "description": "自訂動畫（Agent 撰寫 visual.motion 動畫模組或繪製新的 SVG 插圖，會耗用較多 token）：allow = 全部放行；deny = 不使用；ask = 分鏡審閱時逐段由使用者決定。",
+          "enum": ["allow", "deny", "ask"],
+          "default": "ask"
+        },
+        "style": { "description": "影片風格與語氣（例如：專業簡報、活潑社群短片），與使用者確認後填寫。", "type": "string" },
+        "language": { "$ref": "common.schema.json#/$defs/locale" },
+        "translatedFrom": {
+          "description": "由 /video-translate 產生時記錄來源專案（SPEC §4.4）。",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "language"],
+          "properties": {
+            "id": { "type": "string", "format": "uuid" },
+            "language": { "$ref": "common.schema.json#/$defs/locale" }
+          }
+        },
+        "format": { "$ref": "#/$defs/format" },
+        "audio": { "$ref": "#/$defs/audio" },
+        "captions": { "$ref": "#/$defs/captions" },
+        "tts": { "$ref": "#/$defs/tts" }
+      },
+      "if": { "properties": { "kind": { "const": "story" } }, "required": ["kind"] },
+      "then": {
+        "description": "故事專案至少要有故事文字或點子描述。",
+        "properties": {
+          "sources": {
+            "anyOf": [
+              { "required": ["story"], "properties": { "story": { "type": "string", "minLength": 1 } } },
+              { "required": ["description"], "properties": { "description": { "type": "string", "minLength": 1 } } }
+            ]
+          }
+        }
+      },
+      "else": {
+        "description": "產品專案至少要有一種產品來源。",
+        "properties": {
+          "sources": {
+            "anyOf": [
+              { "required": ["productUrl"], "properties": { "productUrl": { "type": "string" } } },
+              { "required": ["sourceCodePath"], "properties": { "sourceCodePath": { "type": "string" } } },
+              { "required": ["description"], "properties": { "description": { "type": "string", "minLength": 1 } } }
+            ]
+          }
+        }
+      }
+    },
+    "castMember": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "description": "英文小寫識別碼，也是美術資料夾名稱（@/assets/cast/<id>/）。", "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+        "name": { "description": "script.md 中【】內使用的名字。", "type": "string", "minLength": 1, "maxLength": 40, "pattern": "^[^【】\\s]+$" },
+        "description": { "description": "外型與個性，給畫圖與挑聲音參考。", "type": "string" },
+        "provider": { "description": "省略時沿用 project.tts.provider。", "$ref": "common.schema.json#/$defs/ttsProvider" },
+        "voice": { "description": "省略時沿用 project.tts.voice。", "type": "string", "minLength": 1 },
+        "art": { "description": "角色部件 SVG 所在資料夾，通常為 @/assets/cast/<id>/。", "$ref": "common.schema.json#/$defs/relPath" }
+      }
+    },
+    "sources": {
+      "description": "影片的來源資料；至少要有哪些依 project.kind 而定。",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "productUrl": { "type": ["string", "null"], "format": "uri", "pattern": "^https?://" },
+        "requiresLogin": {
+          "description": "產品網址要登入才看得到。為 true 時，使用者須先以 pnpm run login 在瀏覽器視窗自行登入，capture 才能執行（gate productLogin）。帳密不寫入任何檔案。",
+          "type": "boolean",
+          "default": false
+        },
+        "sourceCodePath": {
+          "description": "產品原始碼位置，唯讀輸入，可在專案外（相對或絕對路徑）。",
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "description": { "type": ["string", "null"] },
+        "story": {
+          "description": "故事全文、大綱或點子（kind 為 story 時使用）。整理後的定稿在 brief/story.md。",
+          "type": ["string", "null"]
+        },
+        "referenceVideoUrl": {
+          "description": "風格參考影片（可選，SPEC §6.2 Step 2）。",
+          "type": ["string", "null"],
+          "format": "uri"
+        }
+      }
+    },
+    "format": {
+      "description": "寬高須符合 aspectRatio（由 validate.mjs 檢查）。H.264 需偶數寬高。",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["aspectRatio", "width", "height", "fps"],
+      "properties": {
+        "aspectRatio": { "enum": ["16:9", "9:16", "1:1", "4:5"] },
+        "width": { "type": "integer", "minimum": 320, "maximum": 3840, "multipleOf": 2 },
+        "height": { "type": "integer", "minimum": 320, "maximum": 3840, "multipleOf": 2 },
+        "fps": { "enum": [24, 25, 30, 50, 60] },
+        "targetDurationSec": { "type": "number", "minimum": 5, "maximum": 600 }
+      }
+    },
+    "audio": {
+      "description": "BGM 設定，只在 assemble 階段使用（SPEC §7.5）。",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bgm": {
+          "description": "相對於專案根目錄；null 或檔案不存在時略過 BGM。",
+          "anyOf": [{ "$ref": "common.schema.json#/$defs/relPath" }, { "type": "null" }]
+        },
+        "bgmVolume": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.25 },
+        "ducking": { "type": "boolean", "default": true }
+      }
+    },
+    "captions": {
+      "description": "字幕設定，只在 assemble 階段使用，不納入 scene 的 inputHash（SPEC §7.5）。",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["srt", "burn", "none"], "default": "srt" },
+        "style": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "fontFamily": { "type": "string", "minLength": 1 },
+            "fontSize": { "type": "integer", "minimum": 12, "maximum": 200 },
+            "position": { "enum": ["bottom", "middle", "top"], "default": "bottom" }
+          }
+        }
+      }
+    },
+    "tts": {
+      "description": "專案預設 TTS（SPEC §7.4），scene 可覆寫。",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider"],
+      "properties": {
+        "provider": { "$ref": "common.schema.json#/$defs/ttsProvider" },
+        "voice": { "type": "string", "minLength": 1 },
+        "consent": {
+          "description": "連網 TTS 的使用者同意紀錄。",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["onlineTts"],
+          "properties": {
+            "onlineTts": { "type": "boolean" },
+            "grantedAt": { "$ref": "common.schema.json#/$defs/timestamp" }
+          },
+          "if": { "properties": { "onlineTts": { "const": true } } },
+          "then": { "required": ["grantedAt"] }
+        }
+      },
+      "if": {
+        "properties": { "provider": { "not": { "enum": ["manual", "system"] } } }
+      },
+      "then": { "required": ["voice"] }
+    }
+  }
+}

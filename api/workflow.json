@@ -1,0 +1,364 @@
+{
+  "$schema": "./workflow.schema.json",
+  "specVersion": "1.0.0",
+  "gates": {
+    "onlineTtsConsent": {
+      "appliesWhen": "實際使用的 TTS provider 為 edge-tts、azure、openai 或 elevenlabs",
+      "check": "project.tts.consent.onlineTts == true",
+      "blocks": ["tts"],
+      "ask": "告知使用者：旁白文字將送至 <服務名稱> 進行語音合成。請使用者同意，或改選離線 provider（piper、system）或 manual 自行錄音。",
+      "record": "project.tts.consent = { onlineTts: true, grantedAt }",
+      "onDecline": "停下，請使用者選擇離線 provider 或 manual。"
+    },
+    "domEditConsent": {
+      "appliesWhen": "scene 的 visual.capture.actions 含有 script 動作（錄製時修改頁面內容，例如在資料很少的報表頁填入示意資料）",
+      "check": "visual.capture.domEditConsent.granted == true",
+      "blocks": ["capture"],
+      "ask": "告知使用者：這個頁面的資料太少，畫面會很空。說明打算在錄製時暫時改寫哪些內容（例如表格填入 12 筆示意訂單、圖表補上 6 個月的趨勢），只影響錄下來的畫面，不會改到產品或它的資料；畫面角落會標示「示意資料」。請使用者同意，或改用真實資料、使用者提供的截圖。",
+      "record": "visual.capture.domEditConsent = { granted: true, grantedAt }（每個 scene 分別取得）",
+      "onDecline": "不加 script 動作，照實錄製；或請使用者提供有資料的帳號畫面或截圖。"
+    },
+    "productLogin": {
+      "appliesWhen": "project.sources.requiresLogin == true，或擷取時被導向登入頁（capture 輸出 gate productLogin）",
+      "check": "使用者已以 pnpm run login 登入（登入資料存於 .auth/，Agent 不讀取）",
+      "blocks": ["capture"],
+      "ask": "先提醒：錄影會拍到登入後畫面上的一切（客戶名稱、email、金額），建議用展示用帳號，或經同意後把敏感處改成示意資料（domEditConsent）。再說明：會打開一個獨立的瀏覽器視窗（為了安全，不用平常的瀏覽器，所以要再登入一次；視窗上方可能寫著受自動測試軟體控制，這是正常的），請使用者像平常一樣登入，帳號密碼只在那個視窗輸入，Agent 看不到；登入完成後關閉視窗即可。然後執行 pnpm run login。",
+      "record": "不寫入 JSON；pnpm run login 輸出 signed in 即成立。輸出 no sign-in page was seen 時問使用者是否已登入",
+      "onDecline": "不擷取需要登入的頁面：改用使用者提供的截圖或錄影（user-asset），或只擷取不需登入的公開頁面。"
+    }
+  },
+  "steps": [
+    {
+      "id": "init",
+      "title": "初始化專案",
+      "command": "/video-init",
+      "args": [
+        { "name": "source", "required": false, "description": "產品網址、原始碼路徑或文字描述；故事影片為故事全文、大綱或點子。未提供時詢問使用者。" }
+      ],
+      "scope": "project",
+      "requires": {
+        "other": ["目前目錄為空，或尚無 video.project.json"]
+      },
+      "writes": [
+        { "path": "video.project.json" },
+        { "path": "package.json" },
+        { "path": "AGENTS.md" },
+        { "path": "CLAUDE.md" },
+        { "path": "schemas/" }
+      ],
+      "actions": [
+        { "id": "scaffold", "do": "下載並解壓 /api/templates/product-video.zip，以 manifest.json 的 SHA-256 驗證完整性。" },
+        { "id": "fill_project", "do": "填入 project.id（新 UUID）、name、kind（產品介紹為 product，故事影片為 story）、sources、language、format。product 至少需要一種產品來源；story 需要 sources.story 或 sources.description。向使用者確認 targetAudience 與 style；targetDurationSec 未指定時先用預設，analyze 後再確認。" },
+        { "id": "install", "do": "pnpm install" },
+        { "id": "check_tools", "do": "檢查 ffmpeg / ffprobe、Playwright 瀏覽器、所選 TTS 是否可用；缺少時告知安裝方式，不自行以系統權限安裝。" },
+        { "id": "gates", "do": "依 gates 詢問 onlineTtsConsent 並記錄；sources.requiresLogin 為 true 時接著處理 productLogin（pnpm run login，使用者自行登入）。" },
+        {
+          "id": "validate",
+          "do": "pnpm run validate",
+          "transitions": [{ "target": "project", "to": "initialized" }]
+        }
+      ],
+      "checkpoint": null,
+      "guide": "skills/product-video/workflow.md#init"
+    },
+    {
+      "id": "analyze",
+      "title": "分析產品",
+      "command": "/video-analyze",
+      "kinds": ["product"],
+      "scope": "project",
+      "requires": { "projectStatus": ["initialized", "analyzed"], "gates": ["productLogin"] },
+      "reads": [
+        { "path": "video.project.json" },
+        { "path": "project.sources.productUrl", "optional": true, "note": "以 Playwright 擷取頁面文字與主要截圖；requiresLogin 時先過 productLogin gate" },
+        { "path": "project.sources.sourceCodePath", "optional": true, "note": "README、package.json、路由與頁面" }
+      ],
+      "writes": [
+        { "path": "brief/product-brief.md" },
+        { "path": "brief/style.json", "optional": true },
+        { "path": "assets/brand/", "optional": true, "note": "擷取到的 logo、截圖" }
+      ],
+      "actions": [
+        { "id": "collect", "do": "讀取所有提供的產品來源。" },
+        { "id": "brief", "do": "產出 brief/product-brief.md：一句話定位、目標受眾、痛點、核心功能（≤5）、USP、品牌色與字型、CTA。" },
+        {
+          "id": "style",
+          "do": "若有 referenceVideoUrl 或參考影片檔：以 FFmpeg 抽取關鍵影格，分析節奏、色調、字幕樣式、轉場，寫入 brief/style.json。取得不到影片時跳過並在 brief 註明，不臆測。",
+          "when": "project.sources.referenceVideoUrl 或使用者提供參考影片"
+        },
+        {
+          "id": "done",
+          "do": "pnpm run state project --status analyzed",
+          "transitions": [{ "target": "project", "from": ["initialized", "analyzed"], "to": "analyzed" }]
+        }
+      ],
+      "checkpoint": "摘要產品重點，確認觀看對象與影片風格，並依內容提出 2–3 個長度選項（附估算理由與建議）。使用者確認後以 pnpm run state 寫入 project.targetAudience、project.style、project.format.targetDurationSec，才可進入 storyboard。",
+      "guide": "skills/product-video/workflow.md#analyze"
+    },
+    {
+      "id": "develop_story",
+      "title": "整理故事",
+      "command": "/video-story",
+      "kinds": ["story"],
+      "scope": "project",
+      "requires": { "projectStatus": ["initialized", "analyzed"] },
+      "reads": [
+        { "path": "project.sources.story", "optional": true },
+        { "path": "project.sources.description", "optional": true },
+        { "path": "brief/story.md", "optional": true, "note": "修改已整理好的故事時" }
+      ],
+      "writes": [{ "path": "brief/story.md" }],
+      "actions": [
+        { "id": "assess", "do": "判斷使用者給的是完整故事、大綱還是只有點子。" },
+        {
+          "id": "develop",
+          "do": "不是完整故事時，一次問一件事、每題附建議，和使用者一起補齊主角、想要什麼、阻礙、轉折、結局與想傳達的感覺；不替使用者決定結局等關鍵情節。",
+          "when": "來源不是完整故事"
+        },
+        { "id": "write", "do": "寫 brief/story.md：一句話故事、角色表（名字、外型、個性）、依起承轉合分段的故事全文、想傳達的感覺與觀看對象。" },
+        {
+          "id": "done",
+          "do": "pnpm run state project --status analyzed",
+          "transitions": [{ "target": "project", "from": ["initialized", "analyzed"], "to": "analyzed" }]
+        }
+      ],
+      "checkpoint": "用白話把故事從頭講一次（含角色表），確認情節與結局，並依故事長度提出 2–3 個影片長度選項。使用者確認後以 pnpm run state 寫入 project.targetAudience、project.style、project.format.targetDurationSec，才可進入 design。",
+      "guide": "skills/story-video/story-guide.md#develop"
+    },
+    {
+      "id": "design",
+      "title": "美術與角色",
+      "command": "/video-design",
+      "kinds": ["story"],
+      "scope": "project",
+      "requires": { "projectStatus": ["analyzed", "designed"] },
+      "reads": [{ "path": "brief/story.md" }],
+      "writes": [
+        { "path": "brief/design.md" },
+        { "path": "assets/cast/", "note": "每個角色一個資料夾，放可組合的部件 SVG" },
+        { "path": "assets/sets/", "optional": true, "note": "場景與道具 SVG" },
+        { "path": "video.project.json", "note": "project.cast" }
+      ],
+      "actions": [
+        { "id": "style", "do": "寫 brief/design.md：畫風、配色、線條粗細、角色比例與一致性規則。" },
+        { "id": "art", "do": "為每個角色畫部件 SVG（身體、頭、表情、可動的手腳）並畫場景與道具；另外把所有角色與場景排成一張設定稿 brief/design-sheet.svg 讓使用者看。" },
+        { "id": "voices", "do": "為每個角色挑聲音，用 pnpm run tts --sample 試聽（需要時先依 onlineTtsConsent 取得同意）。" },
+        { "id": "cast", "do": "以 pnpm run state project --patch-file 寫入 project.cast（id、name、description、voice、art）。" },
+        {
+          "id": "done",
+          "do": "pnpm run state project --status designed",
+          "transitions": [{ "target": "project", "from": ["analyzed", "designed"], "to": "designed" }]
+        }
+      ],
+      "checkpoint": "給使用者看設定稿與每個角色的試聽檔，逐一確認外型與聲音。使用者確認前不得進入 storyboard；之後改了角色美術或聲音，用到的 scene 都要重做。",
+      "guide": "skills/story-video/design-guide.md"
+    },
+    {
+      "id": "storyboard",
+      "title": "規劃分鏡與旁白",
+      "command": "/video-storyboard",
+      "scope": "project",
+      "requires": { "projectStatus": ["analyzed", "designed", "script_generated", "producing", "ready_to_assemble", "completed"] },
+      "reads": [
+        { "path": "brief/product-brief.md", "optional": true, "note": "product 專案" },
+        { "path": "brief/story.md", "optional": true, "note": "story 專案；另讀 brief/design.md 與 project.cast" },
+        { "path": "{dir}/scene.json", "optional": true, "note": "重新規劃時讀取現有分鏡" },
+        { "path": "{dir}/script.md", "optional": true, "note": "重新規劃時讀取現有分鏡" },
+        { "path": "brief/style.json", "optional": true }
+      ],
+      "writes": [
+        { "path": "{dir}/scene.json" },
+        { "path": "{dir}/script.md" },
+        { "path": "video.project.json", "note": "scenes 陣列" }
+      ],
+      "actions": [
+        { "id": "plan", "do": "規劃 3–8 個 scene。product 建議骨架：hook → problem → solution → feature → benefit → cta；story 依起承轉合：opening → setup → conflict → climax → resolution → ending，做法見 story-video Skill 的 story-guide.md#storyboard。" },
+        {
+          "id": "revise",
+          "do": "已有 scene 時改為修訂現有分鏡：只改使用者要求的部分，先提出逐段的保留／修改／新增／移除清單並等使用者確認，確認後才寫入；保留的 scene 沿用原 id 與目錄。此時 write 只建立新增的 scene，register 只更新 scenes 陣列，不設定 project 狀態（state 會依 scene 自動重算）。最後執行 sync，只重做有變更的 scene 並重新合成。做法見 script-guide.md#revise。",
+          "when": "project.scenes 不為空"
+        },
+        { "id": "write", "do": "每個 scene 建立 scenes/{三位數}-{slug}/scene.json 與 script.md，status 為 draft，durationSec 預設 null。" },
+        { "id": "timing", "do": "估算旁白總時長（中文約 4 字/秒、英文約 2.5 字/秒），需接近 project.format.targetDurationSec。" },
+        {
+          "id": "register",
+          "do": "pnpm run state project --patch-file <patch>（將 scenes 依播放順序寫入 video.project.json）",
+          "transitions": [
+            { "target": "scene", "to": "draft" },
+            { "target": "project", "from": ["analyzed", "designed", "script_generated"], "to": "script_generated" }
+          ]
+        },
+        { "id": "validate", "do": "pnpm run validate" }
+      ],
+      "checkpoint": "列出分鏡總覽（每個 scene 的標題、purpose、畫面、預估秒數），再逐段列出完整旁白稿與畫面文字，請使用者審閱。使用者明確確認前不得執行 tts、capture 或 render；確認後才可進入 build_scene。重新規劃時，總覽多一欄標示每段是保留、修改、新增或移除，並在寫入任何檔案前請使用者確認；確認後寫入並執行 sync。",
+      "guide": "skills/product-video/script-guide.md"
+    },
+    {
+      "id": "build_scene",
+      "title": "產生單一 scene",
+      "command": "/video-scene",
+      "args": [
+        { "name": "id", "required": true, "description": "scene id，或 all 表示依序處理所有需要處理的 scene。" }
+      ],
+      "scope": "scene",
+      "requires": {
+        "projectStatus": ["script_generated", "producing", "ready_to_assemble", "completed"],
+        "sceneStatus": ["draft", "assets_ready", "stale", "failed"],
+        "gates": ["onlineTtsConsent", "domEditConsent", "productLogin"]
+      },
+      "skipWhen": [
+        "scene.locked == true（除非使用者明確要求）",
+        "scene.status 為 rendered 或 approved 且 inputHash 相符"
+      ],
+      "reads": [
+        { "path": "{dir}/scene.json" },
+        { "path": "{dir}/script.md" },
+        { "path": "{dir}/assets/", "optional": true }
+      ],
+      "writes": [
+        { "path": "{dir}/assets/narration.mp3" },
+        { "path": "{dir}/assets/captions.json" },
+        { "path": "{dir}/assets/capture.*", "optional": true },
+        { "path": "{dir}/output/scene.mp4" }
+      ],
+      "actions": [
+        {
+          "id": "begin",
+          "do": "pnpm run state project --status producing",
+          "transitions": [{ "target": "project", "from": ["script_generated", "ready_to_assemble", "completed"], "to": "producing" }]
+        },
+        { "id": "tts", "do": "pnpm run tts <id>", "when": "旁白音檔不存在或 script.md / 聲音設定已變更" },
+        { "id": "capture", "do": "pnpm run capture <id>", "when": "visual.type 為 web-capture 或 screenshot" },
+        {
+          "id": "assets_ready",
+          "do": "pnpm run state <id> --status assets_ready",
+          "transitions": [{ "target": "scene", "from": ["draft", "stale", "failed"], "to": "assets_ready" }]
+        },
+        {
+          "id": "render",
+          "do": "pnpm run state <id> --status rendering，接著 pnpm run render:scene <id>",
+          "transitions": [{ "target": "scene", "from": ["assets_ready"], "to": "rendering" }]
+        },
+        {
+          "id": "rendered",
+          "do": "pnpm run state <id> --rendered（寫入 render.inputHash、outputFile、renderedAt，attempts 歸零）",
+          "transitions": [{ "target": "scene", "from": ["rendering"], "to": "rendered" }]
+        },
+        { "id": "validate", "do": "pnpm run validate" },
+        {
+          "id": "on_failure",
+          "do": "pnpm run state <id> --failed <step> \"<message>\"；保留既有檔案；同一 scene 自動重試至多 2 次（依 attempts），之後停下回報。",
+          "when": "任何動作失敗",
+          "transitions": [{ "target": "scene", "to": "failed" }]
+        }
+      ],
+      "checkpoint": "回報 {dir}/output/scene.mp4 的路徑與實際秒數，請使用者預覽。使用者要求修改時只重做此 scene。",
+      "guide": "skills/product-video/rendering-guide.md"
+    },
+    {
+      "id": "assemble",
+      "title": "合成最終影片",
+      "command": "/video-assemble",
+      "scope": "project",
+      "requires": {
+        "projectStatus": ["ready_to_assemble", "completed"],
+        "other": ["所有 scene 為 rendered 或 approved，且 inputHash 相符"]
+      },
+      "reads": [
+        { "path": "{dir}/output/scene.mp4" },
+        { "path": "{dir}/assets/captions.json" },
+        { "path": "project.audio.bgm", "optional": true }
+      ],
+      "writes": [
+        { "path": "output/final.mp4" },
+        { "path": "output/final.srt", "optional": true, "note": "captions.mode 為 none 時不產生" }
+      ],
+      "actions": [
+        { "id": "check", "do": "pnpm run status；有未完成或過期的 scene 時列出並停止。" },
+        { "id": "assemble", "do": "pnpm run assemble" },
+        {
+          "id": "done",
+          "do": "pnpm run state project --status completed",
+          "transitions": [{ "target": "project", "from": ["ready_to_assemble", "completed"], "to": "completed" }]
+        }
+      ],
+      "checkpoint": "回報 output/final.mp4 的路徑與總長度。",
+      "guide": "skills/product-video/rendering-guide.md#assemble"
+    }
+  ],
+  "operations": [
+    {
+      "id": "sync",
+      "title": "同步變更",
+      "command": "/video-sync",
+      "scope": "project",
+      "requires": { "projectStatus": ["script_generated", "producing", "ready_to_assemble", "completed"] },
+      "actions": [
+        { "id": "detect", "do": "pnpm run status，找出 status 為 stale、failed、draft，或 inputHash 不相符的 scene。" },
+        {
+          "id": "mark_stale",
+          "do": "pnpm run state <id> --status stale",
+          "when": "scene 為 rendered 或 approved 但 inputHash 不相符（例如使用者直接改檔）",
+          "transitions": [{ "target": "scene", "from": ["rendered", "approved"], "to": "stale" }]
+        },
+        { "id": "rebuild", "do": "對每個需要處理且未鎖定的 scene 執行 build_scene（略過 checkpoint，最後一併回報）。" },
+        { "id": "assemble", "do": "全部完成後執行 assemble。" }
+      ],
+      "checkpoint": "列出重做的 scene 與 output/final.mp4 路徑。",
+      "guide": "skills/product-video/workflow.md#sync"
+    },
+    {
+      "id": "status",
+      "title": "查看狀態",
+      "command": "/video-status",
+      "scope": "project",
+      "actions": [{ "id": "report", "do": "pnpm run status，並以表格摘要各 scene 狀態、是否過期、下一步建議指令。" }],
+      "checkpoint": null
+    },
+    {
+      "id": "approve",
+      "title": "核准 scene",
+      "command": "/video-approve",
+      "args": [{ "name": "id", "required": true }],
+      "scope": "scene",
+      "requires": { "sceneStatus": ["rendered"] },
+      "actions": [
+        {
+          "id": "approve",
+          "do": "pnpm run state <id> --status approved",
+          "transitions": [{ "target": "scene", "from": ["rendered"], "to": "approved" }]
+        }
+      ],
+      "checkpoint": null
+    },
+    {
+      "id": "translate",
+      "title": "翻譯為其他語言",
+      "command": "/video-translate",
+      "args": [{ "name": "locale", "required": true, "description": "BCP 47 語言標籤，例如 en-US。" }],
+      "scope": "project",
+      "requires": { "projectStatus": ["script_generated", "producing", "ready_to_assemble", "completed"] },
+      "actions": [
+        { "id": "copy", "do": "將專案複製到同層 <專案目錄名>-<locale>/，不含 output/、scenes/*/output/、scenes/*/assets/narration.*、scenes/*/assets/captions.json。" },
+        { "id": "identity", "do": "新專案產生新 project.id，記錄 project.translatedFrom，更新 language 與 tts.voice。" },
+        { "id": "translate", "do": "翻譯所有 script.md、scene title、visual.elements 中的文字。" },
+        {
+          "id": "reset",
+          "do": "所有 scene 設為 draft 並清除 render；若產品有對應語系頁面，截圖類素材需重新擷取。",
+          "transitions": [
+            { "target": "scene", "to": "draft" },
+            { "target": "project", "to": "script_generated" }
+          ]
+        }
+      ],
+      "checkpoint": "列出新專案路徑與翻譯後的分鏡，請使用者審閱；之後在新專案中執行 build_scene。",
+      "guide": "skills/product-video/workflow.md#translate"
+    }
+  ],
+  "derivedProjectStatus": [
+    { "when": "所有 scene 為 rendered 或 approved，inputHash 皆相符，且 output/final.mp4 比所有 scene 輸出新", "status": "completed" },
+    { "when": "所有 scene 為 rendered 或 approved，且 inputHash 皆相符", "status": "ready_to_assemble" },
+    { "when": "任一 scene 不是 draft", "status": "producing" },
+    { "when": "其他", "status": "script_generated" }
+  ]
+}

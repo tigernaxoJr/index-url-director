@@ -1,0 +1,46 @@
+{
+  "specVersion": "1.0.0",
+  "siteUrl": "https://aofa.tigernaxo.com",
+  "entry": "https://aofa.tigernaxo.com/api/agent-guide.md",
+  "workflow": "https://aofa.tigernaxo.com/api/workflow.json",
+  "schemas": {
+    "common": "https://aofa.tigernaxo.com/api/schemas/common.schema.json",
+    "project": "https://aofa.tigernaxo.com/api/schemas/project.schema.json",
+    "scene": "https://aofa.tigernaxo.com/api/schemas/scene.schema.json",
+    "activity": "https://aofa.tigernaxo.com/api/schemas/activity.schema.json",
+    "workflow": "https://aofa.tigernaxo.com/api/schemas/workflow.schema.json"
+  },
+  "prompts": {
+    "analyze-product": "https://aofa.tigernaxo.com/api/prompts/analyze-product.md",
+    "analyze-style": "https://aofa.tigernaxo.com/api/prompts/analyze-style.md",
+    "storyboard": "https://aofa.tigernaxo.com/api/prompts/storyboard.md",
+    "scene-script": "https://aofa.tigernaxo.com/api/prompts/scene-script.md"
+  },
+  "rules": {
+    "script": "https://aofa.tigernaxo.com/api/rules/script.md",
+    "visual": "https://aofa.tigernaxo.com/api/rules/visual.md"
+  },
+  "skill": "https://aofa.tigernaxo.com/api/skills/product-video.zip",
+  "skillDocs": "https://aofa.tigernaxo.com/api/skills/product-video/SKILL.md",
+  "template": "https://aofa.tigernaxo.com/api/templates/product-video.zip",
+  "templateManifest": "https://aofa.tigernaxo.com/api/templates/product-video/manifest.json",
+  "entries": {
+    "product": "https://aofa.tigernaxo.com/api/agent-guide.md",
+    "story": "https://aofa.tigernaxo.com/api/story-guide.md"
+  },
+  "skills": {
+    "product": {
+      "zip": "https://aofa.tigernaxo.com/api/skills/product-video.zip",
+      "docs": "https://aofa.tigernaxo.com/api/skills/product-video/SKILL.md"
+    },
+    "story": {
+      "zip": "https://aofa.tigernaxo.com/api/skills/story-video.zip",
+      "docs": "https://aofa.tigernaxo.com/api/skills/story-video/SKILL.md"
+    }
+  },
+  "checksums": {
+    "skill": "4ae797e5cc0c0f1402ee4051ffd62a6bf640cc31cb592769c4eec8a9ba569e7c",
+    "storySkill": "a27aa7f5b9bba1565fe8f210e2d476aa98cf25531207f39bbdf849b0e29debbe",
+    "template": "986fe18794fe9c10df242ce4f08c10022a5999f4944d6ea4a528bb73cb242ae2"
+  }
+}

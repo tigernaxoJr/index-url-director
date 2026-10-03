@@ -1,0 +1,56 @@
+{
+  "name": "slidev-deck",
+  "specVersion": "1.0.0",
+  "zip": {
+    "url": "/api/slide/templates/slidev-deck.zip",
+    "sha256": "9b052f868628dcf6b1b86e2bf19ae6fd724cc1234bffa128562322e8afb8e9cf",
+    "size": 7081
+  },
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "57cafb5d02384d82baf2be90ff7e2df68f5842ba063e41ac5388dbc4f4408a3d",
+      "size": 2046
+    },
+    {
+      "path": "README.md",
+      "sha256": "33277f61f79673c25ee9442ecdf75ae9fde08cd94af88ff393fde3a785f31c78",
+      "size": 349
+    },
+    {
+      "path": "components/SvgDiagram.vue",
+      "sha256": "6a4ca9f2cec765c6d4f7f763e7a771eb798de9013602b8df5b9a0e52f511b220",
+      "size": 1747
+    },
+    {
+      "path": "components/ThreeGlobe.vue",
+      "sha256": "ab2dd6ff6c68fc5c1a9f8ae03053058b629bb44425c7da20ce06623c663626d9",
+      "size": 1554
+    },
+    {
+      "path": "package.json",
+      "sha256": "62b7a378c521505bd9d34e754c722ccb35fc7e67459233e32dd191d671b80968",
+      "size": 577
+    },
+    {
+      "path": "scripts/state.mjs",
+      "sha256": "fb1bca394a566bbda18ab2035e7c74e959f798090a84bea15c41a084cac472b6",
+      "size": 1852
+    },
+    {
+      "path": "scripts/validate.mjs",
+      "sha256": "d589b2d14df70d4d0f888591e1e07063761ef208229a676c4474a90c4a75600a",
+      "size": 1080
+    },
+    {
+      "path": "slide.project.json",
+      "sha256": "d7fbcbcf0b43557666f4b872dbe4942cfcf7bc0bfb248cefdc58965069f4df85",
+      "size": 312
+    },
+    {
+      "path": "slides.md",
+      "sha256": "3d06950c61ec80d344890e335f53c86ff7d06e87aa98383c296201bcb69d2d52",
+      "size": 2436
+    }
+  ]
+}
