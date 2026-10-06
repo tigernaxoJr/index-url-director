@@ -21,6 +21,7 @@ export const ACTIONS = {
   validate: { scene: false },
   tts: { scene: true },
   capture: { scene: true },
+  manim: { scene: true },
   'render-scene': { scene: true },
   rebuild: { scene: true },
   assemble: { scene: false },
@@ -91,6 +92,7 @@ export async function startCompanion({ projectDir = process.cwd(), port, persist
       case 'validate':
       case 'tts':
       case 'capture':
+      case 'manim':
       case 'render-scene': {
         const r = await runScript(root, action, sceneId ? [sceneId] : [], { onLine })
         return { ok: r.code === 0, output: `${r.stdout}${r.stderr}`.trim() }

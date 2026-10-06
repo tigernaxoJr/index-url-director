@@ -27,19 +27,22 @@ export function scriptSpeakers(script) {
   return [...names].sort()
 }
 
-/** A `motion.uses` entry ending in `/` names a whole folder. */
+/** A `uses` entry ending in `/` names a whole folder. */
 const isDir = (p) => p.endsWith('/')
 
+/** The scene's own animation program: `visual.motion` (JavaScript) or `visual.manim` (Python). */
+const program = (scene) => scene.visual?.motion ?? scene.visual?.manim
+
 /**
- * Paths a scene's content refers to (script, code file, asset, motion module and the shared files
- * it uses, element sources). Folders from `motion.uses` are left out; see hashedDirs().
+ * Paths a scene's content refers to (script, code file, asset, animation program and the shared
+ * files it uses, element sources). Folders from `uses` are left out; see hashedDirs().
  */
 export function referencedPaths(scene) {
   return [
     scene.narration?.scriptFile ?? 'script.md',
     scene.visual?.code?.file,
-    scene.visual?.motion?.file,
-    ...(scene.visual?.motion?.uses ?? []).filter((p) => !isDir(p)),
+    program(scene)?.file,
+    ...(program(scene)?.uses ?? []).filter((p) => !isDir(p)),
     scene.visual?.asset?.src,
     ...(scene.visual?.elements ?? []).map((el) => el.src),
   ].filter(Boolean)
@@ -47,10 +50,10 @@ export function referencedPaths(scene) {
 
 /**
  * Project-relative folders whose every file the input hash covers: the scene's assets/ and the
- * folders in `motion.uses`. Callers list them and pass the files to hashFiles().
+ * folders in `motion.uses` / `manim.uses`. Callers list them and pass the files to hashFiles().
  */
 export function hashedDirs(sceneDir, scene) {
-  const used = (scene.visual?.motion?.uses ?? []).filter(isDir).map((p) => projectRelative(sceneDir, p))
+  const used = (program(scene)?.uses ?? []).filter(isDir).map((p) => projectRelative(sceneDir, p))
   return [`${sceneDir}/assets`, ...used.filter((d) => d !== null)]
 }
 

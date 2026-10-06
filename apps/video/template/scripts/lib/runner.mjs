@@ -53,7 +53,7 @@ export async function status(root) {
 const firstLine = (text) => text.trim().split(/\r?\n/).filter(Boolean).at(-1) ?? 'failed'
 
 /**
- * The deterministic part of build_scene (workflow.json): tts → capture → assets_ready → rendering →
+ * The deterministic part of build_scene (workflow.json): tts → capture → manim → assets_ready → rendering →
  * render:scene → rendered. Stops at the first failure and records it with `state --failed`.
  * Used by the Companion's "redo now" and the MCP `render_scene` tool. Returns { ok, log }.
  */
@@ -89,6 +89,8 @@ export async function buildScene(root, id, { by, onLine } = {}) {
   if (r.code) return fail('tts', r)
   r = await step('capture', 'capture', [id])
   if (r.code) return fail('capture', r)
+  r = await step('manim', 'manim', [id])
+  if (r.code) return fail('manim', r)
   r = await step('assets ready', 'state', [id, '--status', 'assets_ready', '--by', by])
   if (r.code) return fail('other', r)
   r = await step('rendering', 'state', [id, '--status', 'rendering', '--by', by])

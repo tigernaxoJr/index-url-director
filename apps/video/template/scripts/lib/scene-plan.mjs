@@ -16,26 +16,12 @@ export function buildPlan(root, project, ref, scene) {
   const { width, height, fps } = project.project.format
   const sceneDir = join(root, ref.dir)
   const resolve = (p) => resolveProjectPath(root, sceneDir, p)
-  const warnings = []
   const need = (file, what) => {
     if (!existsSync(file)) throw new UsageError(`${scene.id}: ${what} not found (${file})`)
     return file
   }
 
-  const audioFile = resolve(scene.narration.audioFile ?? DEFAULTS.audioFile)
-  const audioSec = existsSync(audioFile) ? probeDuration(audioFile) : null
-  let duration = scene.durationSec
-  if (duration == null) {
-    if (audioSec == null) {
-      throw new UsageError(`${scene.id}: durationSec is null and there is no narration audio; run "pnpm run tts ${scene.id}" or set durationSec`)
-    }
-    duration = audioSec + TAIL_SEC
-  } else if (audioSec != null && audioSec > duration) {
-    warnings.push(`narration (${audioSec.toFixed(2)}s) is longer than durationSec (${duration}s) and will be cut off`)
-  }
-  const frames = Math.max(1, Math.round(duration * fps))
-  duration = frames / fps
-
+  const { audioFile, audioSec, frames, durationSec: duration, warnings } = sceneTiming(root, project, ref, scene)
   const plan = {
     id: scene.id,
     width,
@@ -53,10 +39,13 @@ export function buildPlan(root, project, ref, scene) {
     plan.cues = existsSync(captionsFile) ? JSON.parse(readFileSync(captionsFile, 'utf8')) : []
     plan.cast = (project.project.cast ?? []).map(({ id, name }) => ({ id, name }))
   }
-  if (scene.visual.type === 'web-capture') {
+  if (['web-capture', 'manim'].includes(scene.visual.type)) {
     const recSec = probeDuration(plan.background.file)
+    const what = scene.visual.type === 'manim' ? 'manim video' : 'recording'
     if (recSec > duration + 0.5) {
-      warnings.push(`the recording (${recSec.toFixed(2)}s) is longer than the scene (${duration.toFixed(2)}s); the last ${(recSec - duration).toFixed(1)}s is cut`)
+      warnings.push(`the ${what} (${recSec.toFixed(2)}s) is longer than the scene (${duration.toFixed(2)}s); the last ${(recSec - duration).toFixed(1)}s is cut`)
+    } else if (scene.visual.type === 'manim' && recSec < duration - 0.5) {
+      warnings.push(`the manim video (${recSec.toFixed(2)}s) is shorter than the scene (${duration.toFixed(2)}s); its last frame is held; run "pnpm run manim ${scene.id}" again if the narration changed`)
     }
   }
 
@@ -80,6 +69,28 @@ export function buildPlan(root, project, ref, scene) {
     plan.elements.push(item)
   }
   return { plan, warnings }
+}
+
+/**
+ * The scene's length: durationSec, or the narration plus TAIL_SEC when null, rounded to whole
+ * frames. Returns { audioFile, audioSec, frames, durationSec, warnings }.
+ */
+export function sceneTiming(root, project, ref, scene) {
+  const { fps } = project.project.format
+  const warnings = []
+  const audioFile = resolveProjectPath(root, join(root, ref.dir), scene.narration.audioFile ?? DEFAULTS.audioFile)
+  const audioSec = existsSync(audioFile) ? probeDuration(audioFile) : null
+  let duration = scene.durationSec
+  if (duration == null) {
+    if (audioSec == null) {
+      throw new UsageError(`${scene.id}: durationSec is null and there is no narration audio; run "pnpm run tts ${scene.id}" or set durationSec`)
+    }
+    duration = audioSec + TAIL_SEC
+  } else if (audioSec != null && audioSec > duration) {
+    warnings.push(`narration (${audioSec.toFixed(2)}s) is longer than durationSec (${duration}s) and will be cut off`)
+  }
+  const frames = Math.max(1, Math.round(duration * fps))
+  return { audioFile, audioSec, frames, durationSec: frames / fps, warnings }
 }
 
 function background(visual, resolve, need, sceneDir, duration) {
@@ -112,6 +123,15 @@ function background(visual, resolve, need, sceneDir, duration) {
       if (asset.kind === 'image') return { kind: 'image', file, fit: asset.fit ?? 'contain', kenBurns: false }
       return { kind: 'video', file, fit: asset.fit ?? 'contain', trimStart: asset.trimStartSec ?? 0, trimEnd: asset.trimEndSec ?? null, span: duration }
     }
+    case 'manim':
+      return {
+        kind: 'video',
+        file: need(join(sceneDir, 'assets', 'manim.mp4'), 'manim video (run pnpm run manim)'),
+        fit: 'contain',
+        trimStart: 0,
+        trimEnd: null,
+        span: duration,
+      }
     default: // motion-graphic: the agent's own animation module, or the theme gradient
       if (visual.motion) return { kind: 'module', file: need(resolve(visual.motion.file), 'visual.motion.file') }
       return { kind: 'gradient' }

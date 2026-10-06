@@ -1,0 +1,30 @@
+{
+  "id": "scene-004",
+  "title": "畢氏定理",
+  "purpose": "how-it-works",
+  "narration": {
+    "scriptFile": "script.md"
+  },
+  "visual": {
+    "type": "manim",
+    "description": "從 a² + b² = c² 推導斜邊長",
+    "manim": {
+      "file": "assets/scene.py",
+      "class": "Main",
+      "uses": [
+        "@/assets/manim/"
+      ]
+    },
+    "elements": [
+      {
+        "type": "text",
+        "content": "畢氏定理",
+        "at": 0.5,
+        "position": "top"
+      }
+    ]
+  },
+  "durationSec": null,
+  "status": "draft",
+  "locked": false
+}

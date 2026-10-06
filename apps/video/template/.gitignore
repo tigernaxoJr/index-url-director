@@ -6,5 +6,7 @@ video.activity.json
 .env
 .env.*
 .auth/
+.venv/
+__pycache__/
 output/
 scenes/*/output/

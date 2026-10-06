@@ -19,7 +19,7 @@ import { checkTransition, deriveProjectStatus } from './lib/status.mjs'
 import { assertValid, validateProject } from './lib/validate.mjs'
 
 const WRITERS = ['agent', 'user', 'companion', 'mcp']
-const ERROR_STEPS = ['tts', 'capture', 'render', 'validate', 'other']
+const ERROR_STEPS = ['tts', 'capture', 'manim', 'render', 'validate', 'other']
 
 run((argv) => {
   const { positional, flags } = parseArgs(argv, { status: 1, failed: 2, hint: 1, 'patch-file': 1, patch: 1, by: 1 })

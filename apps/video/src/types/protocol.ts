@@ -74,7 +74,7 @@ export interface VideoProjectJson {
      */
     durationAdjust?: "auto" | "ask";
     /**
-     * 自訂動畫（Agent 撰寫 visual.motion 動畫模組或繪製新的 SVG 插圖，會耗用較多 token）：allow = 全部放行；deny = 不使用；ask = 分鏡審閱時逐段由使用者決定。
+     * 動畫的使用方式（Skill script-guide.md#custom-motion）。allow = Agent 依需要使用動畫範本與自訂動畫；ask = 範本照用，從零寫的自訂動畫（visual.motion 模組、Manim 程式、新的 SVG 插圖，較耗時與 token）在分鏡審閱時逐段由使用者決定；deny = 不使用動畫。
      */
     customMotion?: "allow" | "deny" | "ask";
     /**
@@ -236,9 +236,9 @@ export interface SceneJson {
    */
   visual: {
     /**
-     * web-capture：Playwright 錄製網頁操作；screenshot：靜態截圖 + 動效；motion-graphic：純動畫（可用 motion 指定自寫的動畫模組）；code：程式碼展示；user-asset：使用者提供的影片或圖片。
+     * web-capture：Playwright 錄製網頁操作；screenshot：靜態截圖 + 動效；motion-graphic：純動畫（可用 motion 指定自寫的動畫模組）；code：程式碼展示；user-asset：使用者提供的影片或圖片；manim：Agent 撰寫的 Manim（Python）動畫，先由 pnpm run manim 渲染成影片再當背景。
      */
-    type: "web-capture" | "screenshot" | "motion-graphic" | "code" | "user-asset";
+    type: "web-capture" | "screenshot" | "motion-graphic" | "code" | "user-asset" | "manim";
     /**
      * 給人與 Agent 讀的畫面描述。
      */
@@ -321,6 +321,23 @@ export interface SceneJson {
       uses?: string[];
     };
     /**
+     * manim 型別的動畫：Agent 撰寫的 Manim Community（Python）程式，由 pnpm run manim 渲染成 assets/manim.mp4 當背景，elements 仍疊加在上面。寫法見 Skill rendering-guide.md#manim。
+     */
+    manim?: {
+      /**
+       * Python 檔，通常放在 assets/scene.py。
+       */
+      file: string;
+      /**
+       * 要渲染的 Scene 類別名稱。
+       */
+      class?: string;
+      /**
+       * 程式匯入或讀取的共用檔案或資料夾（例如 @/assets/manim/），納入 inputHash。資料夾以 / 結尾，包含底下所有檔案。
+       */
+      uses?: string[];
+    };
+    /**
      * 疊加在畫面上的元素。
      */
     elements?: {
@@ -398,7 +415,7 @@ export interface SceneJson {
    */
   locked: boolean;
   error?: {
-    step: "tts" | "capture" | "render" | "validate" | "other";
+    step: "tts" | "capture" | "manim" | "render" | "validate" | "other";
     message: string;
     /**
      * ISO 8601 / RFC 3339 日期時間，須含時區。

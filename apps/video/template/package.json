@@ -12,6 +12,7 @@
     "state": "node scripts/state.mjs",
     "tts": "node scripts/tts.mjs",
     "capture": "node scripts/capture.mjs",
+    "manim": "node scripts/manim.mjs",
     "login": "node scripts/login.mjs",
     "render:scene": "node scripts/render-scene.mjs",
     "assemble": "node scripts/assemble.mjs",

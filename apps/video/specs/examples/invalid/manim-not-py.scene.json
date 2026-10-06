@@ -1,0 +1,18 @@
+{
+  "id": "scene-004",
+  "title": "畢氏定理",
+  "purpose": "how-it-works",
+  "narration": {
+    "scriptFile": "script.md"
+  },
+  "visual": {
+    "type": "manim",
+    "description": "manim.file 必須是 Python 檔",
+    "manim": {
+      "file": "assets/scene.js"
+    }
+  },
+  "durationSec": null,
+  "status": "draft",
+  "locked": false
+}

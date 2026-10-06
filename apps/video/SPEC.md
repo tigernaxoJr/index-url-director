@@ -125,11 +125,15 @@ my-video-project/
 │   ├── validate.mjs
 │   ├── tts.mjs
 │   ├── capture.mjs
+│   ├── manim.mjs               # visual.type manim → assets/manim.mp4
 │   ├── render-scene.mjs
 │   ├── assemble.mjs
 │   └── state.mjs               # 唯一的 JSON 寫入入口（§10.2）
 ├── src/                        # 渲染器程式碼（§7.6）
 │   ├── lib/motion.js           # 版面、動畫、配色（純函式）
+│   ├── lib/manim_timing.py     # Manim 程式取得 scene 長度與旁白 cues
+│   ├── lib/manim_recipes.py    # Manim 範本（FormulaSteps、FunctionGraph）
+│   ├── recipes/                # 動畫範本：motion.js 匯入後只填設定（count-up、flow、bars…）
 │   ├── html/player.js          # scene 版面（純 DOM，`window.__seek(t)`）
 │   └── fonts/                  # 內附字型（Noto Sans TC Bold、JetBrains Mono，OFL）
 └── output/
@@ -248,7 +252,7 @@ my-video-project/
 | 欄位 | 說明 |
 |---|---|
 | `purpose` | `hook` · `problem` · `solution` · `feature` · `how-it-works` · `benefit` · `social-proof` · `cta` · `custom` |
-| `visual.type` | `web-capture`（Playwright 擷取網頁操作）· `screenshot`（靜態截圖 + 動效）· `motion-graphic`（純動畫，無擷取素材；`visual.motion.file` 可指定 Agent 撰寫的動畫模組，預設匯出 `setup(ctx)` 並回傳 `seek(t)`，受 `project.customMotion` 限制）· `code`（程式碼展示）· `user-asset`（使用者提供的影片/圖片） |
+| `visual.type` | `web-capture`（Playwright 擷取網頁操作）· `screenshot`（靜態截圖 + 動效）· `motion-graphic`（純動畫，無擷取素材；`visual.motion.file` 可指定 Agent 撰寫的動畫模組，預設匯出 `setup(ctx)` 並回傳 `seek(t)`；模組可直接匯入 `src/recipes/` 的動畫範本，只填設定。依 `project.customMotion`（預設 `allow`）使用）· `code`（程式碼展示）· `user-asset`（使用者提供的影片/圖片）· `manim`（Agent 撰寫的 Manim Python 程式，`pnpm run manim` 預先渲染成 `assets/manim.mp4` 當背景影片層；適合公式、幾何、演算法講解，受 `project.customMotion` 限制） |
 | `narration.provider` | TTS 提供者，省略時沿用 `project.tts.provider`。見 §7.4 |
 | `durationSec` | `null` 表示由 TTS 音檔長度決定（音長 + 0.5s 緩衝）；有值則為強制秒數。幀數一律由 `durationSec × fps` 推得，**不存幀數**。 |
 | `render.inputHash` | 對 scene.json（排除 `$schema`、`status`、`render`、`error`、`attempts`、`locked`、`updatedAt`、`updatedBy`，鍵排序後序列化）、旁白稿、該 scene `assets/` 下所有檔案、scene 引用的 `@/` 檔案、專案 `format`（`captions.mode` 為 `burn` 時連同 `captions`）計算的 SHA-256。與目前內容不符即視為過期。 |
@@ -484,6 +488,7 @@ Agent 重算所有 scene 的 inputHash，找出 stale / 不相符者
     "validate":     "node scripts/validate.mjs",
     "tts":          "node scripts/tts.mjs",
     "capture":      "node scripts/capture.mjs",
+    "manim":        "node scripts/manim.mjs",
     "login":        "node scripts/login.mjs",
     "render:scene": "node scripts/render-scene.mjs",
     "assemble":     "node scripts/assemble.mjs",
@@ -503,6 +508,7 @@ Agent 重算所有 scene 的 inputHash，找出 stale / 不相符者
 | `validate.mjs` | 全專案 | 退出碼（非 0 = 失敗）；`--report` 輸出各 scene 狀態、是否過期與建議的下一個指令；`--json` 輸出機器可讀結果（供 Web UI / Companion）。輸入已變更（`inputHash` 不符）只是警告，不算錯誤 | 否 |
 | `tts.mjs <id>` | script.md、voice 設定 | `assets/narration.mp3`、`assets/captions.json`；`--list-voices` 列出目前 provider 的聲音 | 否 |
 | `capture.mjs <id>` | `visual.capture` | `assets/capture.*`；`--url <網址> --out <目錄>` 模式供 analyze 擷取產品頁（整頁 + 首屏截圖、頁面文字、可 highlight 的元素與 selector）；`highlight` 一次框一個元素，找不到時警告並略過；`script` 需 `domEditConsent`。有保存的登入時以它開頁；`sources.requiresLogin` 卻沒有登入、或開頁被導到登入頁時以 `gate productLogin` 失敗 | 否 |
+| `manim.mjs <id>` | `visual.manim`、旁白長度與 `assets/captions.json` | `assets/manim.mp4`：以專案寬高、fps 執行 Manim（`VIDEO_MANIM` → 專案 `.venv` → PATH），scene 長度與 cues 經 `AVP_TIMING` 傳給程式（`src/lib/manim_timing.py`）。非 `manim` 型別直接略過；找不到 Manim 時以 `gate manimInstall` 失敗 | 否 |
 | `login.mjs [url]` | `sources.productUrl` | 打開**可見**的瀏覽器視窗（優先用已安裝的 Chrome / Edge），使用者自己登入後關閉；登入狀態（cookie、localStorage、IndexedDB）存到 `.auth/login.json`（列入 `.gitignore`，Agent 不讀）。只在看過登入頁、又離開登入頁後才算登入成功，視窗下方的提示隨之由藍轉綠。`--clear` 刪除 | 否 |
 | `render-scene.mjs <id>` | scene 全部輸入 | `output/scene.mp4`（H.264 + AAC 48 kHz 立體聲、BT.709，無旁白時為靜音音軌）；失敗時保留既有輸出 | 否 |
 | `state.mjs <target> <patch>` | Agent 提供的修改 | 更新後的 JSON（鎖檔 + 原子寫入 + validate，§10.2） | **是**（唯一例外，由 Agent 呼叫） |
@@ -567,7 +573,7 @@ Agent 重算所有 scene 的 inputHash，找出 stale / 不相符者
 以 Playwright（Apache-2.0）逐幀截圖、FFmpeg 編碼，不需額外授權（`scripts/render-scene.mjs`）：
 
 - **Render plan**：`scripts/lib/scene-plan.mjs` 將 scene.json + `project.format` 轉為 plan（時長、幀數、背景層、疊加元素、旁白）。渲染器只畫 plan；版面、動畫與配色由 `src/lib/motion.js` 的純函式定義。
-- **影片素材正規化**：所有影片層（錄影、`user-asset` 影片、影片元素）先以 FFmpeg 轉為專案 fps、依 trim 裁切、補到精確幀數（較短時停在最後一格），再交給渲染器。素材原聲不使用。
+- **影片素材正規化**：所有影片層（錄影、`user-asset` 影片、Manim 影片、影片元素）先以 FFmpeg 轉為專案 fps、依 trim 裁切、補到精確幀數（較短時停在最後一格），再交給渲染器。素材原聲不使用。
 - **素材存取**：渲染期間在 `127.0.0.1` 隨機埠啟動唯讀靜態伺服器，只提供專案根目錄內的檔案（支援 Range）。不使用 `file://`。
 - **字型**：畫面與燒入字幕只使用 `src/fonts/` 內附的字型（Noto Sans TC Bold、JetBrains Mono），不依賴系統字型，因此 Windows、macOS、Linux 輸出相同。
 - 暫存檔放在 `.tmp/render-<id>/`，結束即刪除。輸出先寫到 `*.partial.mp4`，成功後才替換 `output/scene.mp4`。
@@ -731,7 +737,7 @@ Vue 3 + Vite + TypeScript + Tailwind，純靜態部署（GitHub Pages，§12.1�
 - `render_scene`：執行 build_scene 的確定性部分（見下方「重做流程」），失敗時以 `state --failed` 記錄。`assemble_video`：`assemble` 後將專案設為 `completed`。
 - 註冊方式（Claude Code）：從本 repo 以本機路徑註冊，`claude mcp add video-agent -- node <repo>/packages/video-agent/bin/video-agent.mjs mcp`。不從 npm 下載。
 
-**重做流程（專案 `scripts/lib/runner.mjs` 的 `buildScene`，MCP 與 Companion 共用）**：專案若為 `script_generated` / `ready_to_assemble` / `completed` 先設為 `producing` → scene 為 `rendered` / `approved` 時先設為 `stale`（workflow 不允許直接跳回 `assets_ready`）；殘留在 `rendering` 的先記為失敗 → `tts` → `capture` → `assets_ready` → `rendering` → `render:scene` → `--rendered`。任一步失敗即停止並記錄。鎖定（`locked`）的 scene 拒絕執行。Gates 由各腳本本身把關。
+**重做流程（專案 `scripts/lib/runner.mjs` 的 `buildScene`，MCP 與 Companion 共用）**：專案若為 `script_generated` / `ready_to_assemble` / `completed` 先設為 `producing` → scene 為 `rendered` / `approved` 時先設為 `stale`（workflow 不允許直接跳回 `assets_ready`）；殘留在 `rendering` 的先記為失敗 → `tts` → `capture` → `manim` → `assets_ready` → `rendering` → `render:scene` → `--rendered`。任一步失敗即停止並記錄。鎖定（`locked`）的 scene 拒絕執行。Gates 由各腳本本身把關。
 
 ### 10.1 Local MCP 與 Companion
 

@@ -18,6 +18,14 @@
       "record": "visual.capture.domEditConsent = { granted: true, grantedAt }（每個 scene 分別取得）",
       "onDecline": "不加 script 動作，照實錄製；或請使用者提供有資料的帳號畫面或截圖。"
     },
+    "manimInstall": {
+      "appliesWhen": "有 scene 的 visual.type 為 manim",
+      "check": "pnpm run manim 找得到 Manim（VIDEO_MANIM、專案的 .venv 或 PATH 上的 manim；manim --version 成功）",
+      "blocks": ["manim"],
+      "ask": "告知使用者：這幾段要用 Manim（Python 動畫工具）畫，需要在專案裡安裝 Python 套件（約數百 MB）：uv venv .venv --python 3.12，接著 uv pip install --python .venv manim。Linux 另需系統套件 libcairo2-dev、libpango1.0-dev、pkg-config（要用 sudo，請使用者自己執行）；公式（MathTex、Tex）另需 LaTeX。請使用者同意安裝，或改用 motion-graphic。",
+      "record": "不寫入 JSON；pnpm run manim 不再輸出 Manim is not installed 即成立",
+      "onDecline": "把這幾段改成 motion-graphic（SVG / GSAP 動畫模組或 elements 排版），公式改用文字元素或預先存好的 SVG。"
+    },
     "productLogin": {
       "appliesWhen": "project.sources.requiresLogin == true，或擷取時被導向登入頁（capture 輸出 gate productLogin）",
       "check": "使用者已以 pnpm run login 登入（登入資料存於 .auth/，Agent 不讀取）",
@@ -204,7 +212,7 @@
       "requires": {
         "projectStatus": ["script_generated", "producing", "ready_to_assemble", "completed"],
         "sceneStatus": ["draft", "assets_ready", "stale", "failed"],
-        "gates": ["onlineTtsConsent", "domEditConsent", "productLogin"]
+        "gates": ["onlineTtsConsent", "domEditConsent", "productLogin", "manimInstall"]
       },
       "skipWhen": [
         "scene.locked == true（除非使用者明確要求）",
@@ -219,6 +227,7 @@
         { "path": "{dir}/assets/narration.mp3" },
         { "path": "{dir}/assets/captions.json" },
         { "path": "{dir}/assets/capture.*", "optional": true },
+        { "path": "{dir}/assets/manim.mp4", "optional": true },
         { "path": "{dir}/output/scene.mp4" }
       ],
       "actions": [
@@ -229,6 +238,7 @@
         },
         { "id": "tts", "do": "pnpm run tts <id>", "when": "旁白音檔不存在或 script.md / 聲音設定已變更" },
         { "id": "capture", "do": "pnpm run capture <id>", "when": "visual.type 為 web-capture 或 screenshot" },
+        { "id": "manim", "do": "pnpm run manim <id>（在 tts 之後，讓動畫依旁白時間點進行）", "when": "visual.type 為 manim" },
         {
           "id": "assets_ready",
           "do": "pnpm run state <id> --status assets_ready",

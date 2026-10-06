@@ -10,6 +10,7 @@
 pnpm run state project --status producing          # 專案仍是 script_generated 等狀態時
 pnpm run tts scene-003                             # 旁白 → assets/narration.mp3、assets/captions.json
 pnpm run capture scene-003                         # 只有 web-capture / screenshot 需要
+pnpm run manim scene-003                           # 只有 manim 需要（在 tts 之後）
 pnpm run state scene-003 --status assets_ready
 pnpm run state scene-003 --status rendering
 pnpm run render:scene scene-003                    # → output/scene.mp4
@@ -69,12 +70,40 @@ pnpm run render:scene scene-001 scene-002 scene-003   # 可加 --jobs 2 限制�
 | `motion-graphic` | 深色漸層背景，畫面由 `elements` 構成；有 `motion` 時改由動畫模組畫出（[#motion](#motion)） | 無；有 `motion` 時為 `motion.file` |
 | `code` | 程式碼面板置中；`highlightLines` 以外的行會變淡 | `code.file` 或 `code.content` |
 | `user-asset` | 使用者的圖片或影片，依 `fit`（`contain` / `cover`）縮放 | `asset.src` |
+| `manim` | Manim 渲染出的動畫影片（[#manim](#manim)） | `manim.file`；`assets/manim.mp4`（`pnpm run manim`） |
 
 影片素材（錄影、`user-asset` 影片、影片元素）比它應在畫面上的時間短時，停在最後一格；比較長時截掉。`trimStartSec` / `trimEndSec` 先裁切，再套用上述規則。影片素材的原聲不會使用，scene 的聲音只有旁白。
 
+### <a id="recipes"></a>動畫範本 `src/recipes/`（先找這裡）
+
+範本內附一組可直接用的動畫，`motion.js` 只要匯入一個範本、填好設定，通常不到 10 行。要做的畫面和下表相近時一律先用範本；只有範本做不到時才從零寫模組（[#motion](#motion)）。
+
+| 範本 | 畫面 | 適合 | 主要設定 |
+|---|---|---|---|
+| `count-up.js` | 大數字從 0 跳到目標值，外圈進度環填滿 | benefit、social-proof（「快 10 倍」「98% 滿意」） | `to`、`prefix`、`suffix`、`decimals`、`label` |
+| `bars.js` | 長條依序長高，數值跟著跳，可標亮一條 | problem / benefit 的前後對比、競品比較 | `bars: [{ label, value, highlight }]`、`unit` |
+| `compare.js` | 左卡「以前」逐項打叉劃掉，右卡「現在」打勾滑入 | problem → solution | `before`、`after`（`{ title, items }`）、`afterAt` |
+| `flow.js` | 方塊依序出現、連線自己畫出、光點沿線流動 | how-it-works、架構、資料流（2–5 步） | `nodes`（字串或 `{ label, highlight }`）、`step`、`times` |
+| `particles.js` | 散落的粒子聚成一個詞；不給 `text` 時是緩慢漂動的光點背景 | hook、cta、品牌名稱 | `text`、`duration`、`count` |
+| `shader.js` | GLSL 流動光帶背景（原生 WebGL，不需套件），上面疊 `elements` 文字 | hook、cta、段落開場 | `colors`、`speed`、`fragment`（自訂 shader） |
+| `kinetic-text.js` | 一行行文字逐字彈入，可標亮關鍵詞（**需要 `gsap`**） | 文字本身就是畫面的 hook / benefit / cta | `lines`、`highlight`、`times` |
+| `device-3d.js` | 產品截圖放進 3D 筆電或手機，緩緩轉向鏡頭（**需要 `three`**） | solution、feature（截圖太平淡時） | `image`、`kind: 'laptop' \| 'phone'` |
+
+```js
+// scenes/005-benefit/assets/motion.js
+import countUp from '../../../src/recipes/count-up.js'
+export default countUp({ to: 10, suffix: '×', label: '部署速度', at: { cue: 1 } })
+```
+
+- **時間對齊旁白**：各範本的時間設定（`at`、`times`、`afterAt`）可以填秒數，或 `{ cue: i, offset }` 表示「旁白第 i 句（從 0 起算）開始時」。先 `tts` 再寫 `motion.js`，畫面才會跟著聲音走。
+- 每個範本檔開頭的註解列出全部設定。標題、說明文字仍用 `elements` 疊在上面。
+- `kinetic-text.js`、`device-3d.js` 用到 GSAP / Three.js，第一次用時依下方說明安裝（`pnpm add gsap`、`pnpm add three`）。
+- 範本不夠用時，把範本檔複製到該 scene 的 `assets/` 再修改（相對路徑改成 `../../../src/recipes/util.js`），不要改 `src/recipes/` 本身：`src/` 不納入 `inputHash`，改了已渲染的段落不會自動標示需要重做。`util.js` 有 `progress`、`ease`、`random`（固定種子）、`timeOf`、`svg` 等工具可直接用。
+- Manim 也有範本，見 [#manim](#manim)。
+
 ### <a id="motion"></a>自訂動畫模組 `visual.motion`
 
-`motion-graphic` 可以用你寫的 JavaScript 模組畫整個背景，取代預設漸層；`elements` 仍疊在上面。能不能用、要不要先問，依 `project.customMotion`（[script-guide.md#custom-motion](script-guide.md#custom-motion)）。
+`motion-graphic` 可以用你寫的 JavaScript 模組畫整個背景，取代預設漸層；`elements` 仍疊在上面。先看[動畫範本](#recipes)有沒有合用的；從零寫算〔自訂動畫〕，依 `project.customMotion` 處理（[script-guide.md#custom-motion](script-guide.md#custom-motion)）。
 
 ```json
 "visual": { "type": "motion-graphic", "description": "粒子沿連線流向雲端", "motion": { "file": "assets/motion.js" } }
@@ -114,6 +143,53 @@ export default async function setup({ root, width, height, fps, durationSec, the
 GSAP 與 Three.js 不在範本裡，要用時先在專案安裝（`pnpm add gsap`、`pnpm add three`，依硬性規則 11 先用白話取得同意），模組裡直接 `import { gsap } from 'gsap'`、`import * as THREE from 'three'`、`import { OrbitControls } from 'three/addons/controls/OrbitControls.js'`，渲染器會從專案的 `node_modules` 提供，不需要網路。其他函式庫不支援 bare import；需要時把單一 ES module 檔放在 `assets/` 以相對路徑匯入。
 
 寫完先渲染這一段確認畫面（短的 scene 可以先把 `durationSec` 設短測試，確認後改回）。`motion.js` 與 scene `assets/` 內的檔案都納入 `inputHash`，修改後該 scene 會自動變成需要重做；模組匯入的共用檔案（`@/assets/` 下）不在內，改了要自己把用到它的 scene 標為 `stale`。
+
+### <a id="manim"></a>Manim 動畫 `visual.type: manim`
+
+[Manim Community](https://www.manim.community/)（Python）擅長**數學與演算法的講解**：公式推導與變形（`MathTex` / `TransformMatchingTex`）、幾何證明、函數圖形、座標轉換、排序與圖論的逐步過程、矩陣運算。這類畫面用 Manim 比 SVG / GSAP 精準又省事；產品畫面、3D、品牌動態、粒子光影仍用 [`motion-graphic`](#motion)。用 Manim 範本算〔動畫〕，自己寫 `construct()` 算〔自訂動畫〕，依 `project.customMotion` 處理（[script-guide.md#custom-motion](script-guide.md#custom-motion)）。
+
+```json
+"visual": {
+  "type": "manim",
+  "description": "從 a² + b² = c² 推導出斜邊長",
+  "manim": { "file": "assets/scene.py", "class": "Main" }
+}
+```
+
+`pnpm run manim <id>` 用專案的寬高與 fps 渲染出 `assets/manim.mp4`，`render:scene` 再把它當背景，`elements` 照常疊在上面。流程是 `tts` → 寫 `assets/scene.py` → `manim` → `render:scene`；必須先有旁白，程式才知道每句話的時間點。
+
+```python
+from manim import *
+from manim_timing import FONTS, timing, wait_until, finish   # 範本的 src/lib/manim_timing.py
+
+class Main(Scene):
+    def construct(self):
+        cues = timing()["cues"]          # 旁白每句的 {"start", "end", "text"}（秒）
+        eq = MathTex("a^2", "+", "b^2", "=", "c^2").scale(1.6)
+        self.play(Write(eq), run_time=1.5)
+        wait_until(self, cues[1]["start"] if len(cues) > 1 else 3)   # 等旁白講到第二句
+        self.play(eq.animate.set_color_by_tex("c^2", "#38bdf8"))
+        finish(self)                     # 停在最後一格直到這段結束
+```
+
+- **先用範本**：`src/lib/manim_recipes.py` 有 `FormulaSteps`（公式逐步變形，每一步對齊一句旁白）與 `FunctionGraph`（畫座標軸與函數圖形、點沿曲線移動）。`assets/scene.py` 只要繼承並設定欄位：
+
+  ```python
+  from manim_recipes import FormulaSteps
+
+  class Main(FormulaSteps):
+      STEPS = [r"{{a^2}} + {{b^2}} = {{c^2}}", r"{{c}} = \sqrt{ {{a^2}} + {{b^2}} }"]
+      CAPTION = "畢氏定理"
+  ```
+
+  公式中用 `{{ }}` 包住的部分會在步驟之間滑到新位置。做不到時才自己寫 `construct()`。
+- **時間對齊旁白**：`timing()` 回傳 `durationSec`、`fps`、`width`、`height`、`cues`。用 `wait_until(self, 秒數)` 等到旁白講到某句再動作，最後一定呼叫 `finish(self)`，影片長度才會剛好等於這段的長度。動畫比這段短時停在最後一格，比較長時截掉，`manim` 與 `render:scene` 都會印出警告。
+- **改了旁白就要重跑 `manim`**：時間點來自 `assets/captions.json`。`tts` 重做後依序執行 `manim`、`render:scene`。
+- **配色與字型**：背景預設為深藍 `#0f172a`（與其他段落一致），主色白字、強調色 `#38bdf8`。中文用範本內附的字型：`with register_font(str(FONTS / "NotoSansTC-Bold.otf")):` 區塊裡建立 `Text("…", font="Noto Sans TC")`（`FONTS` 從 `manim_timing` 匯入）；較長的中文標題仍建議交給 `elements`。公式用 `MathTex`，需要 LaTeX；沒有 LaTeX 時改用 `Text` 或 `elements`。
+- **不從網路載入任何東西**；隨機用固定種子（`random.seed(0)`）。共用的 Python 檔或圖片放在 `@/assets/manim/`，列在 `manim.uses`（資料夾以 `/` 結尾），改了才會自動標示需要重做。
+- **不要做的**：不寫 `config.pixel_width` 等設定（解析度、fps 由 `manim` 指令決定）、不加聲音（`add_sound`）、不用 `ThreeDScene` 做大量 3D（很慢，3D 改用 Three.js）。
+- **安裝**：第一次執行若輸出 `Manim is not installed`，依 gate `manimInstall` 用白話取得同意後在專案安裝：`uv venv .venv --python 3.12`，接著 `uv pip install --python .venv manim`（`manim` 會自動使用專案的 `.venv`）。Linux 還需要系統套件 `libcairo2-dev libpango1.0-dev pkg-config`，要用 sudo，請使用者自己執行；macOS 用 `brew install cairo pango pkg-config`。使用者不想安裝時，改用 `motion-graphic`。
+- 先單獨試畫面：`durationSec` 暫設短一點跑 `manim`，看 `assets/manim.mp4`；也可以在專案根目錄手動執行 `PYTHONPATH=src/lib .venv/bin/manim render -ql scenes/<dir>/assets/scene.py Main`（此時 `timing()` 沒有旁白資料，`cues` 是空陣列，程式要能照常跑完）。
 
 ### <a id="svg"></a>SVG 插圖（可存檔重複使用）
 
@@ -161,6 +237,9 @@ GSAP 與 Three.js 不在範本裡，要用時先在專案安裝（`pnpm add gsap
 | `no usable browser` | 找不到瀏覽器 | 告知使用者執行 `pnpm exec playwright install chromium` 或安裝 Chrome / Edge | `render` |
 | `player did not start: …`、`player error: …` | 動畫模組（`visual.motion`）載入或執行出錯，訊息為瀏覽器中的錯誤 | 修正模組後重新渲染；同一錯誤修不好時改用 `elements` 排版並告訴使用者 | `render` |
 | `visual.motion.file not found` | 動畫模組檔不存在 | 寫好模組，或移除 `visual.motion` | `render` |
+| `Manim is not installed` | 找不到 Manim | 依 gate `manimInstall` 取得同意後安裝（[#manim](#manim)）；不算失敗，不記 `--failed` | — |
+| `manim exited with code …` | Python 程式出錯，錯誤在前面的輸出 | 修正 `scene.py` 後重跑 `manim`；同一錯誤修不好時改用 `motion-graphic` 並告訴使用者 | `manim` |
+| `manim video … not found (run pnpm run manim)` | 還沒產生 Manim 影片 | 執行 `manim` | `manim` |
 | `ffmpeg failed: …` | 素材格式無法讀取 | 檢查該素材能否播放；請使用者提供其他格式 | `render` |
 | `… is not a readable video`（`state --rendered`） | 輸出檔損壞 | 重新渲染 | `render` |
 

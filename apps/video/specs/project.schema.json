@@ -75,9 +75,9 @@
           "default": "ask"
         },
         "customMotion": {
-          "description": "自訂動畫（Agent 撰寫 visual.motion 動畫模組或繪製新的 SVG 插圖，會耗用較多 token）：allow = 全部放行；deny = 不使用；ask = 分鏡審閱時逐段由使用者決定。",
+          "description": "動畫的使用方式（Skill script-guide.md#custom-motion）。allow = Agent 依需要使用動畫範本與自訂動畫；ask = 範本照用，從零寫的自訂動畫（visual.motion 模組、Manim 程式、新的 SVG 插圖，較耗時與 token）在分鏡審閱時逐段由使用者決定；deny = 不使用動畫。",
           "enum": ["allow", "deny", "ask"],
-          "default": "ask"
+          "default": "allow"
         },
         "style": { "description": "影片風格與語氣（例如：專業簡報、活潑社群短片），與使用者確認後填寫。", "type": "string" },
         "language": { "$ref": "common.schema.json#/$defs/locale" },

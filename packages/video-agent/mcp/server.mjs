@@ -160,7 +160,7 @@ export function createServer({ projectDir = process.cwd() } = {}) {
   server.registerTool(
     'render_scene',
     {
-      description: 'Produce one scene end to end: narration (tts), capture, render, and record its state. Failures are recorded on the scene. Respects the onlineTtsConsent gate.',
+      description: 'Produce one scene end to end: narration (tts), capture, manim, render, and record its state. Failures are recorded on the scene. Respects the onlineTtsConsent gate.',
       inputSchema: { project: projectArg, id: z.string() },
     },
     tool(async ({ project, id }) => {

@@ -70,7 +70,7 @@
 10. **失敗時保留現場。** 不刪除既有檔案；以 `pnpm run state <id> --failed …` 記錄錯誤。同一 scene 自動重試至多 2 次（看 `attempts`），之後停下並告訴使用者原因與重試方式。
 11. **未經同意不安裝工具。** 缺少 Node.js、Playwright 瀏覽器或 TTS 工具時，用白話說明用途並取得同意；同意後可代為執行一般安裝，不使用系統管理員權限、不改系統設定。需要使用者點擊確認時，給逐步說明。
 12. **太趕時依 `project.durationAdjust` 處理。** `auto` 時可自行在限度內拉長 scene 並事後回報，`ask` 時先問；刪改已確認的旁白、增減 scene 一律先問。做法見 Skill `rendering-guide.md#pacing`。
-13. **自訂動畫依 `project.customMotion` 處理**（`story` 專案每段都是自訂動畫，`customMotion` 設為 `allow`，不逐段詢問）。寫動畫模組（`visual.motion`：SVG、Canvas、GSAP、Three.js、GLSL）或畫新的 SVG 插圖會耗用較多 token：`allow` 可自行使用，`ask` 在分鏡審閱時逐段請使用者決定，`deny` 不使用。重複使用 `assets/svg/` 已存的 SVG 不受限。做法見 Skill `script-guide.md#custom-motion`、`rendering-guide.md#motion`。
+13. **錄不到的內容用動畫呈現，依 `project.customMotion` 處理。** 數字、流程、前後對比、抽象概念、公式，預設用動畫而不是只放文字卡片；先用 `src/recipes/` 的動畫範本（〔動畫〕，只填設定），範本做不到才從零寫模組、Manim 程式或 SVG 插圖（〔自訂動畫〕）。`allow`（預設）依需要使用；`ask` 範本照用，〔自訂動畫〕在分鏡審閱時逐段請使用者決定；`deny` 不使用動畫。`story` 專案每段都是自訂動畫，設為 `allow`。重複使用 `assets/svg/` 已存的 SVG 不受限。做法見 Skill `script-guide.md#choose-visual`、`rendering-guide.md#recipes`、`#motion`、`#manim`。
 14. **假設使用者不懂電腦操作。** 所有指令由你執行，不要求使用者開終端機或打指令；使用者用白話下指示（「繼續」「第三段改成…」），由你對應到工作流程步驟。說明避免術語，回報檔案位置用「文件 > 專案 > output > final.mp4」這類資料夾順序，並可建議用網頁工作台預覽。
 15. **隨時更新 `video.activity.json`。** 網頁工作台用它顯示你正在做什麼、是否在等使用者。每開始一個步驟或 scene、每次停下來等使用者回覆（checkpoint、gate、提問）之前，直接覆寫整個檔案（格式見 `schemas/activity.schema.json`）：`message` 是一句白話，等使用者時 `waitingForUser: true` 並說明要他回答什麼，`step` 為 `workflow.json` 的步驟 id，`scene` 為正在處理的 scene id（沒有時為 `null`），`updatedAt` 為現在時間。它不經過 `pnpm run state`、不需要鎖、不納入版本控制。
 
@@ -111,6 +111,7 @@ pnpm run state scene-003 --patch-file .tmp/patch.json
 | `onlineTtsConsent` | TTS provider 為 `edge-tts`、`azure`、`openai`、`elevenlabs` | `tts` |
 | `productLogin` | `sources.requiresLogin` 為 true，或 `capture` 輸出 `gate productLogin`（被導到登入頁、登入過期） | `capture`；以 `pnpm run login` 讓使用者自己登入，不寫入 JSON |
 | `domEditConsent` | scene 的 `capture.actions` 有 `script`（錄製時改寫頁面，例如報表資料太少時填入示意資料） | 該 scene 的 `capture` |
+| `manimInstall` | 有 scene 的 `visual.type` 為 `manim`，而 `pnpm run manim` 輸出 `Manim is not installed` | `manim`；安裝 Python 套件前先取得同意，需要 sudo 的系統套件請使用者自己裝，不寫入 JSON |
 
 要向使用者說明的內容、使用者拒絕時的處理方式，見 `schemas/workflow.json` 的 `gates`。確認結果以 `pnpm run state` 寫入 `project.tts.consent` 或該 scene 的 `visual.capture.domEditConsent`。
 
@@ -135,6 +136,7 @@ draft → assets_ready → rendering → rendered → approved
 | `pnpm run tts <id>` | 產生旁白音檔與字幕時間軸（【角色】的行用角色的聲音） |
 | `pnpm run tts --sample <角色id\|narrator>` | 產生試聽檔 `brief/voices/<id>.mp3`；`--text "…"` 指定句子 |
 | `pnpm run capture <id>` | 擷取網頁畫面 |
+| `pnpm run manim <id>` | `visual.type` 為 `manim` 的 scene：以 Manim 渲染 `assets/manim.mp4`（先 `tts`，動畫才能對齊旁白） |
 | `pnpm run login` | 打開瀏覽器視窗讓使用者自己登入產品；`--clear` 清除保存的登入 |
 | `pnpm run render:scene <id>…` | 渲染 scene；多個 id 時平行渲染（`--jobs N`）；單一 scene 也以多個瀏覽器分攤影格（`--pages N`） |
 | `pnpm run assemble` | 依順序合成 `output/final.mp4` |

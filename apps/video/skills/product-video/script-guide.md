@@ -22,28 +22,59 @@
 
 ### 各 purpose 的寫法
 
-| purpose | 目的 | 旁白要點 | 建議 visual.type |
+| purpose | 目的 | 旁白要點 | 建議畫面（動畫範本見 [rendering-guide.md#recipes](rendering-guide.md#recipes)） |
 |---|---|---|---|
-| `hook` | 3 秒內抓住注意力 | 一個提問、反差或驚人的結果；不要先自我介紹 | `motion-graphic`、`web-capture`（最吸睛的畫面） |
-| `problem` | 讓受眾覺得「這就是我」 | 具體情境，而非抽象描述 | `motion-graphic`、`screenshot` |
-| `solution` | 介紹產品 | 產品名稱 + 一句話定位 | `web-capture`（首頁或主畫面） |
+| `hook` | 3 秒內抓住注意力 | 一個提問、反差或驚人的結果；不要先自我介紹 | 動畫：`particles` 聚成關鍵字、`kinetic-text`、`shader` 背景 + 大字；或 `web-capture` 最吸睛的畫面 |
+| `problem` | 讓受眾覺得「這就是我」 | 具體情境，而非抽象描述 | 動畫：`compare`（以前逐項打叉）、`bars`（花掉的時間或成本）；或 `screenshot` |
+| `solution` | 介紹產品 | 產品名稱 + 一句話定位 | `web-capture`（首頁或主畫面）；截圖太平淡時 `device-3d` |
 | `feature` | 展示一個功能 | 一個 scene 只講一個功能，講好處而非規格 | `web-capture`、`code` |
-| `how-it-works` | 降低上手門檻 | 步驟化：「只要三步…」 | `web-capture`（操作流程）、`code` |
-| `benefit` | 使用後的改變 | 量化或具體的結果 | `motion-graphic` |
-| `social-proof` | 建立信任 | 只用 brief 中有出處的證據 | `screenshot`、`motion-graphic` |
-| `cta` | 告訴觀眾下一步 | 一個明確動作 + 網址 | `motion-graphic`（logo + 網址） |
+| `how-it-works` | 降低上手門檻 | 步驟化：「只要三步…」 | `web-capture`（操作流程）；流程、架構、資料流用動畫 `flow`；公式或演算法用 `manim` |
+| `benefit` | 使用後的改變 | 量化或具體的結果 | 動畫：`count-up`（數字跳動）、`bars`（前後對比） |
+| `social-proof` | 建立信任 | 只用 brief 中有出處的證據 | 動畫：`count-up`（有出處的數字）；或 `screenshot` |
+| `cta` | 告訴觀眾下一步 | 一個明確動作 + 網址 | 動畫：`particles` 聚成品牌名、`shader` 背景，logo 與網址用 `elements` |
 | `custom` | 以上都不適用 | — | 任意 |
+
+### <a id="choose-visual"></a>選畫面的原則
+
+- **錄得到真實操作的，錄影**：產品長什麼樣、怎麼操作，用 `web-capture` / `screenshot`。
+- **錄不到的，預設用動畫**：抽象概念、看不到的過程（資料流動、架構、自動化）、數字與比較、前後對比、公式與演算法。這些不要只放一張文字卡片交代，動畫比文字清楚，也是影片看起來專業的關鍵。
+- **先找現成範本**：上表的 `count-up`、`bars`、`compare`、`flow`、`particles`、`shader`、`kinetic-text`、`device-3d` 都是 `src/recipes/` 裡的動畫範本，只要填設定。範本沒有的畫面才自己寫。
+- 一般產品影片裡，hook、cta 與講概念或數字的段落用動畫，其餘錄影，大約三分之一到一半的段落會是動畫。
+
+選哪種畫法：
+
+| 要表現的 | 用 | 寫法 |
+|---|---|---|
+| 數字、對比、流程、品牌字、背景質感 | 動畫範本 | [rendering-guide.md#recipes](rendering-guide.md#recipes) |
+| 範本沒有的圖示動畫、流程圖、線條描繪 | 自寫模組：SVG | [rendering-guide.md#motion](rendering-guide.md#motion) |
+| 大量粒子、數字跳動、自由繪圖 | 自寫模組：Canvas 2D | 同上 |
+| 多段依序進場、彈性緩動的排版動畫 | 自寫模組：GSAP | 同上 |
+| 3D 物件、產品展示、空間感 | 自寫模組：Three.js | 同上 |
+| 光線流動、波紋、背景質感 | 自寫模組：GLSL shader | 同上 |
+| 公式推導、幾何、函數圖形、演算法步驟 | `visual.type: manim` | [rendering-guide.md#manim](rendering-guide.md#manim) |
 
 ### 範例（45 秒、zh-TW、開發者工具）
 
 | # | purpose | 旁白 | 畫面 |
 |---|---|---|---|
-| 1 | hook | 部署一個網站，還要花你半天嗎？ | 時鐘快轉 + 終端機報錯畫面 |
-| 2 | problem | 設定伺服器、申請憑證、串接 CI，每一步都可能卡關。 | 三張卡片依序出現並打叉 |
-| 3 | solution | ShipIt 讓你推送程式碼，網站就上線。 | 產品首頁首屏 |
+| 1 | hook | 部署一個網站，還要花你半天嗎？ | 〔動畫〕散落的粒子聚成「半天？」（`particles`） |
+| 2 | problem | 設定伺服器、申請憑證、串接 CI，每一步都可能卡關。 | 〔動畫〕「以前」卡片三項依序打叉（`compare`，「現在」卡片留到下一段） |
+| 3 | solution | ShipIt 讓你推送程式碼，網站就上線。 | 產品首頁首屏錄影 |
 | 4 | feature | 每個分支自動產生預覽網址，直接貼給同事看。 | 錄製 PR 頁面出現預覽連結 |
 | 5 | how-it-works | 只要連結 GitHub、選擇專案、按下部署。 | 錄製三步操作並高亮按鈕 |
-| 6 | cta | 現在就到 example.com 免費開始。 | Logo + 網址置中 |
+| 6 | cta | 現在就到 example.com 免費開始。 | 〔動畫〕流動光帶背景（`shader`），Logo + 網址置中 |
+
+### 範例（60 秒、zh-TW、技術講解：向量搜尋）
+
+| # | purpose | 旁白 | 畫面 |
+|---|---|---|---|
+| 1 | hook | 為什麼搜「便宜機票」，也找得到「廉航優惠」？ | 〔動畫〕兩個詞彈入、中間畫上等號（`kinetic-text`） |
+| 2 | problem | 關鍵字搜尋只比對字面，換個說法就找不到。 | 〔動畫〕命中率長條：字面相同 92%、換句話說 18%（`bars`） |
+| 3 | how-it-works | 向量搜尋先把每段文字變成空間中的一個點。 | 〔自訂動畫〕Manim：座標平面上的點依序出現，意思相近的聚在一起（自己寫 `construct()`） |
+| 4 | how-it-works | 再用餘弦相似度，算兩個點的方向有多接近。 | 〔動畫〕Manim：公式逐步展開（`FormulaSteps` 範本） |
+| 5 | feature | 在 SearchKit 裡，貼上文件就自動建立索引。 | 錄製上傳文件、索引完成 |
+| 6 | benefit | 找到相關內容的機率，提高到原來的三倍。 | 〔動畫〕數字從 1 跳到 3×（`count-up`） |
+| 7 | cta | 到 example.com 免費試用。 | Logo + 網址置中 |
 
 ---
 
@@ -114,18 +145,20 @@
   - `at` 對齊旁白中提到該關鍵字的時間點（依語速估算）。
   - 品牌 logo 用 `@/assets/brand/…`。
   - **字級 `size`**：`normal`（預設）、`large`、`xl`。只有短而重要的字才放大：hook 的提問、benefit 的數字、cta 的網址，或風格是活潑短片、直式影片時。渲染器會把放大的字自動縮回到不超過兩行、不超出畫面，所以不會嚴重跑版；但字太長時縮回後就和 `normal` 差不多，放大前先把文字精簡到 8 字以內。疊在網頁錄影上、或同一畫面已有兩則文字時維持 `normal`。
-- <a id="custom-motion"></a>**自訂動畫與 SVG 插圖**：`motion-graphic` 除了用 `elements` 排文字和圖片，還可以由你寫一支動畫模組（`visual.motion`，用 SVG、Canvas、GSAP、Three.js、GLSL shader、粒子特效畫出整個畫面），或畫 SVG 插圖存成檔案當 `image` 元素。做法見 [rendering-guide.md#motion](rendering-guide.md#motion) 與 [#svg](rendering-guide.md#svg)。
-  - **適合**：抽象概念或看不到的過程（資料流動、架構、前後對比、數字成長）、沒有產品畫面可錄的 hook / benefit、品牌感的開場與結尾。能錄到真實產品畫面時仍優先錄影。
-  - **耗用量**：寫動畫模組或畫新的 SVG 插圖要花較多 token 與時間，所以依 `project.customMotion` 決定能不能用：
+- <a id="custom-motion"></a>**動畫**：`motion-graphic` 可以用動畫模組（`visual.motion`）畫出整個畫面，`elements` 疊在上面；講解公式、幾何、演算法步驟時改用 `visual.type: manim`。什麼時候用、用哪種見 [§1 選畫面的原則](#choose-visual)，做法見 [rendering-guide.md#recipes](rendering-guide.md#recipes)、[#motion](rendering-guide.md#motion)、[#manim](rendering-guide.md#manim) 與 [#svg](rendering-guide.md#svg)。
+  - **兩種動畫**：
+    - **〔動畫〕**：使用 `src/recipes/` 的範本，或 Manim 的 `FormulaSteps` / `FunctionGraph` 範本，只填設定。
+    - **〔自訂動畫〕**：從零寫模組、自己寫 Manim 的 `construct()`、畫新的 SVG 插圖，要花較多時間與 AI 用量。
+  - 依 `project.customMotion`：
 
-    | 設定 | 做法 |
-    |---|---|
-    | `allow` | 依需要自行使用，分鏡審閱時在「畫面」欄標示「自訂動畫」即可 |
-    | `ask`（預設） | 規劃時可以提議，但在分鏡審閱時逐段請使用者決定（見 [§5](#review)）；使用者沒同意的段落改用 `elements` 排版，不寫 `visual.motion` |
-    | `deny` | 不寫 `visual.motion`，也不畫新的 SVG 插圖；只用 `elements`、現有的圖檔與 logo |
+    | 設定 | 〔動畫〕（範本） | 〔自訂動畫〕 |
+    |---|---|---|
+    | `allow`（預設） | 依需要使用 | 依需要使用 |
+    | `ask` | 依需要使用 | 分鏡審閱時逐段請使用者決定（見 [§5](#review)）；沒同意的段落改用範本或 `elements` |
+    | `deny` | 不使用 | 不使用；只用 `elements`、現有的圖檔與 logo |
 
-  - 不算自訂動畫、不必問的：重複使用 `@/assets/svg/` 已存好的 SVG、複製產品原始碼裡現成的 svg/png、簡單的形狀或圖示（幾行 SVG，例如箭頭、勾勾、圓點）。
-  - 製作途中（`/video-scene`、`/video-sync`）才想加分鏡沒列出的自訂動畫時，`ask` 先問、`deny` 不加。
+  - 不算動畫、任何設定都可以用的：重複使用 `@/assets/svg/` 已存好的 SVG、複製產品原始碼裡現成的 svg/png、簡單的形狀或圖示（幾行 SVG，例如箭頭、勾勾、圓點）。
+  - 製作途中（`/video-scene`、`/video-sync`）才想加分鏡沒列出的〔自訂動畫〕時，`ask` 先問、`deny` 不加。
   - 一部影片的自訂動畫段落沿用同一套配色與畫法（`ctx.theme`、同一組 SVG 圖示），看起來才像同一支影片。
 - **`transitionIn`**：預設 `none`（直接切換）；同一段落內的 scene 之間可用 `fade`。全片不超過兩種轉場。
 - **`durationSec`**：一般保持 `null`（由旁白決定）；只有無旁白或需要與音樂對拍時才指定。
@@ -190,8 +223,8 @@
 
 | # | scene     | 用途         | 旁白                                   | 畫面                         | 秒數 |
 |---|-----------|--------------|----------------------------------------|------------------------------|------|
-| 1 | scene-001 | hook         | 部署一個網站，還要花你半天嗎？           | 時鐘快轉 + 終端機報錯        | 4.0  |
-| 2 | scene-002 | problem      | 設定伺服器、申請憑證、串接 CI，…        | 三張卡片依序出現並打叉       | 7.5  |
+| 1 | scene-001 | hook         | 部署一個網站，還要花你半天嗎？           | 〔動畫〕粒子聚成「半天？」    | 4.0  |
+| 2 | scene-002 | problem      | 設定伺服器、申請憑證、串接 CI，…        | 〔動畫〕三項依序打叉          | 7.5  |
 | … |           |              |                                        |                              |      |
 
 需要調整哪幾段？確認後我會開始逐段產生（/video-scene all）。
@@ -206,15 +239,15 @@
 ```
 
 - 秒數為估算值，實際以 TTS 產生後的音長為準。
-- 用到[自訂動畫](#custom-motion)的段落，在「畫面」欄開頭標示「〔自訂動畫〕」。`project.customMotion` 是 `ask` 時，表格後面另外列出這些段落請使用者逐段決定，並附上不用自訂動畫時的替代畫面：
+- 用到[動畫](#custom-motion)的段落，在「畫面」欄開頭標示「〔動畫〕」或「〔自訂動畫〕」。`project.customMotion` 是 `ask` 時，表格後面另外列出〔自訂動畫〕的段落請使用者逐段決定，並附上改用範本時的畫面：
 
   ```text
-  以下段落我想自己寫程式畫動畫，比較生動，但每段會多花一些 AI 用量與製作時間。要哪幾段？（沒選的我改用文字與圖片排版）
-  ① scene-002 problem：三張卡片翻轉後碎裂成粒子 ｜ 不用的話：三張卡片依序出現並打叉
-  ② scene-005 benefit：數字從 0 跳到 10 倍，背景光線流動 ｜ 不用的話：大字「快 10 倍」放大進場
+  以下段落我打算專門寫一段動畫，製作時間會長一些。要哪幾段？（沒選的我改用現成的動畫範本）
+  ① scene-002 problem：三張卡片翻轉後碎裂成粒子 ｜ 改用範本：三項依序打叉（compare）
+  ② scene-005 benefit：產品圖示沿軌道繞行後數字爆開 ｜ 改用範本：數字從 0 跳到 10 倍（count-up）
   ```
 
-  使用者選定後才寫入 scene；沒選的段落不寫 `visual.motion`。這個決定只在本次分鏡有效，之後重新規劃時新增的自訂動畫要再問。
+  使用者選定後才寫入 scene。這個決定只在本次分鏡有效，之後重新規劃時新增的〔自訂動畫〕要再問。
 - 預估總長與已確認的目標長度相差超過 10% 時，在表格上方說明原因，並問使用者要刪減內容還是調整目標長度。
 - 可以提醒使用者也能在網頁工作台直接修改旁白，改完說「我改好了」即可。
 - 使用者提出修改時，**只改被點名的 scene**，改完再呈現一次更新後的表格。

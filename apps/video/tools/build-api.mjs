@@ -25,7 +25,7 @@ const STORY_SHARED = ['rendering-guide.md']
 const templateDir = join(videoDir, 'template')
 const SCHEMAS = ['common.schema.json', 'project.schema.json', 'scene.schema.json', 'activity.schema.json', 'workflow.schema.json']
 /** Paths never shipped in the template zip (relative, forward slashes). */
-const TEMPLATE_EXCLUDE = [/(^|\/)node_modules\//, /^\.tmp\//, /^output\//, /^scenes\/[^/]+\/output\//, /(^|\/)\.video-agent\.lock$/]
+const TEMPLATE_EXCLUDE = [/(^|\/)node_modules\//, /^\.tmp\//, /^output\//, /^scenes\/[^/]+\/output\//, /(^|\/)\.video-agent\.lock$/, /(^|\/)__pycache__\//, /^\.venv\//]
 /** Fixed timestamp so identical inputs give byte-identical zips (and stable hashes). */
 const ZIP_MTIME = new Date(1980, 0, 1)
 
