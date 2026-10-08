@@ -86,4 +86,6 @@ export const DEFAULTS = {
   captionsFile: 'assets/captions.json',
   outputFile: 'output/scene.mp4',
   finalFile: 'output/final.mp4',
+  musicFile: 'assets/music.mp3',
+  musicInfoFile: 'assets/music.json',
 }

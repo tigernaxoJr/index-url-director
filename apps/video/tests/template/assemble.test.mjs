@@ -192,6 +192,23 @@ describe('assemble', () => {
     assert.equal(existsSync(p.path('output/final.srt')), false)
   })
 
+  test('generated music fits the video; a stale one is used with a warning', () => {
+    const project = baseProject()
+    project.project.audio = { bgm: 'assets/music.mp3', music: { preset: 'playful' } }
+    renderedProject([{ color: 'red' }, { color: 'blue', sec: 2 }], { project })
+    let r = p.run('music.mjs')
+    assert.equal(r.code, 0, r.stderr)
+    assert.doesNotMatch(r.stdout, /set audio\.bgm/)
+    r = p.run('assemble.mjs')
+    assert.equal(r.code, 0, r.stderr)
+    assert.match(r.stdout, /with BGM/)
+    assert.doesNotMatch(r.stderr, /was made for/)
+    p.write('assets/music.json', { ...p.read('assets/music.json'), totalSec: 9 })
+    r = p.run('assemble.mjs')
+    assert.equal(r.code, 0, r.stderr)
+    assert.match(r.stderr, /assets\/music\.mp3 was made for 9s but the video is 3\.00s; run pnpm run music/)
+  })
+
   test('a failed assemble keeps the previous final video', () => {
     renderedProject([{ color: 'red' }])
     p.write('output/final.mp4', 'previous final')

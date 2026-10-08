@@ -126,6 +126,7 @@ my-video-project/
 │   ├── tts.mjs
 │   ├── capture.mjs
 │   ├── manim.mjs               # visual.type manim → assets/manim.mp4
+│   ├── music.mjs               # audio.music → assets/music.mp3（產生的 BGM）
 │   ├── render-scene.mjs
 │   ├── assemble.mjs
 │   └── state.mjs               # 唯一的 JSON 寫入入口（§10.2）
@@ -512,6 +513,7 @@ Agent 重算所有 scene 的 inputHash，找出 stale / 不相符者
 | `login.mjs [url]` | `sources.productUrl` | 打開**可見**的瀏覽器視窗（優先用已安裝的 Chrome / Edge），使用者自己登入後關閉；登入狀態（cookie、localStorage、IndexedDB）存到 `.auth/login.json`（列入 `.gitignore`，Agent 不讀）。只在看過登入頁、又離開登入頁後才算登入成功，視窗下方的提示隨之由藍轉綠。`--clear` 刪除 | 否 |
 | `render-scene.mjs <id>` | scene 全部輸入 | `output/scene.mp4`（H.264 + AAC 48 kHz 立體聲、BT.709，無旁白時為靜音音軌）；失敗時保留既有輸出 | 否 |
 | `state.mjs <target> <patch>` | Agent 提供的修改 | 更新後的 JSON（鎖檔 + 原子寫入 + validate，§10.2） | **是**（唯一例外，由 Agent 呼叫） |
+| `music.mjs` | `audio.music`、各 scene 長度與轉場、script.md 的說話角色 | `assets/music.mp3`、`assets/music.json`（§7.5）；`--preview` 為 `brief/music/preview.mp3`，`--sample` 為 `brief/music/sample.mp3` | 否 |
 | `assemble.mjs` | 所有 scene 輸出、`audio`、`captions` | `output/final.mp4`、`output/final.srt`（`captions.mode` 為 `none` 時不產生）。有 scene 未 `rendered`/`approved`、缺輸出或 `inputHash` 不符時列出並失敗；失敗時保留既有輸出。視訊直接複製，只重新編碼轉場片段；聲音（含 BGM）整條混音編碼。scene 編碼參數不一致時整支重新編碼 | 否 |
 
 `state.mjs` 介面（Agent 使用方式見範本 `AGENTS.md` §4）：
@@ -564,7 +566,18 @@ Agent 重算所有 scene 的 inputHash，找出 stale / 不相符者
 
 **BGM**
 
-- 由使用者自備音檔放入 `assets/`，於 `audio.bgm` 指定；網站不提供音樂庫（避免音樂授權責任），不做 AI 生成音樂。
+- 來源二選一，都以 `audio.bgm` 指定：使用者自備音檔放入 `assets/`；或由 `pnpm run music` 依 `audio.music` 在本機產生純樂器 BGM（`assets/music.mp3`）。網站不提供音樂庫（避免音樂授權責任）。
+- **產生 BGM**（`music.mjs`，`scripts/lib/music.mjs`）：
+  - 符號式作曲 + 純 JS 合成：依 preset（`corporate`、`ambient`、`lofi`、`cinematic`、`playful`）與可覆寫的 `instruments`、`bpm`、`key`、`mode`、`progression`（羅馬數字，每小節一個和弦）排出音符。未指定的調性、和弦進行（從 preset 的進行池）、各樂器節奏型與 2 小節旋律動機由 `seed` 依固定順序挑選，換 `seed` 即得同風格的另一首；旋律由 preset 的主奏樂器在 mid / high 段落演奏，每兩次重複的第二次收在和弦根音（`melody: false` 關閉）。音符再以 wavetable、Karplus-Strong 撥弦與噪音鼓組合成，最後經 FFmpeg 加少許殘響編成 MP3。不需要音色庫、模型或網路；相同設定與 `seed` 產生相同音訊。
+  - 長度與段落對齊成片：在 tts 之後執行，以各 scene 長度（`sceneTiming`）與轉場（`layout`）算出成片時間軸。每個 scene 的音樂從離它起點最近的小節線開始，和弦進行從頭來；最後一個小節是主和弦延音到影片結束。
+  - **Agent 作曲**（`sections`、`themes`、`cues`）：Agent 讀故事或 brief 後做音樂決策，引擎負責和聲與對齊。
+    - `sections[sceneId]` 覆寫該段的 `energy`（`low` 只有和聲、`mid` 加入節奏、`high` 最熱鬧）、`key`、`mode`、`progression`、`instruments`、`theme`、`melody`。
+    - `themes` 是 Agent 寫的主題旋律（音階級數 + 節奏，最長 16 拍）。綁 `cast` 的主題在該角色說話（script.md 有【名字】行）的段落演奏，作為主導動機；依段落調式演奏，大調主題在小調段落自動變成小調版本；每小節第一拍不是和弦音時移到最近的和弦音。
+    - `cues` 為 `hit`（大鼓、鈸、低音重擊）、`dropout`（之前若干拍靜音）、`swell`（之前若干拍漸強），對齊最近的拍點。
+    - 未指定的部分由 `seed` 補上，旋律則用 seed 產生的 2 小節動機。
+  - `assets/music.json` 記錄 `totalSec`、拍長、小節起點與各段落實際使用的設定。assemble 發現 `totalSec` 與成片長度不符時警告，提示重跑 `pnpm run music`。
+  - `pnpm run music --preview` 在配音前依 script.md 字數（每秒 4 字）估算長度，產生整首試聽 `brief/music/preview.mp3`。
+  - `pnpm run music --sample` 產生 24 秒（low → mid → high 各 8 秒）試聽檔 `brief/music/sample.mp3`，讓使用者在 scene 完成前選風格。
 - assemble 時混音：BGM 循環播放至成片長度，`bgmVolume` 為基準音量，`ducking: true` 時以旁白為 sidechain 經 `sidechaincompress` 自動壓低，影片頭尾 1 秒淡入淡出（成片短於 2 秒時縮短）。`audio.bgm` 檔案不存在時警告並略過。
 - BGM 同樣只在 assemble 處理，不影響 scene 的 `inputHash`。
 
@@ -639,6 +652,7 @@ skills/product-video/
 | `/video-sync` | 找出 stale scene 並重做 + assemble |
 | `/video-assemble` | assemble |
 | `/video-status` | 執行 `pnpm run status` 並摘要 |
+| `/video-music` | 引導使用者決定背景音樂（自動配樂／自備／不要），自動配樂時逐段作曲並試聽（§7.5） |
 | `/video-approve <id>` | 將 `rendered` 的 scene 設為 `approved` |
 | `/video-translate <locale>` | 複製專案並翻譯為指定語言（§4.4） |
 
@@ -873,3 +887,5 @@ Agent、Local MCP、Companion、UI 皆可能寫入專案 JSON，一律遵守（A
 | D20 | 網站部署與指令來源 | 未規範（§9.4 僅提 Cloudflare / GitHub Pages） | GitHub Pages（`gh-pages` 分支），網址 `/index-url-director`，base path 從 repo 名稱推得（可用 `SITE_URL` 覆寫）；Guide API 一律絕對網址；指令檔與 prompts/rules 皆由既有單一來源（workflow.json、Skill）產生；init 以 Skill 或 agent-guide 為入口 | 子路徑部署下根相對路徑會失效；避免 YAML 與 workflow.json、prompts 與 Skill 雙重維護；init 時專案指令尚不存在 |
 | D21 | Cloud MCP | §10 原規劃由網站提供 Cloud MCP | 不另設雲端 MCP；Guide 類 resources / prompts 併入本機 `video-agent mcp`，內容來自內附或網站的 `/api/*`；專案操作只呼叫專案自己的腳本 | 網站為 GitHub Pages 靜態部署，無法運行 MCP；本機伺服器已隨 Agent 啟動，多一個雲端端點沒有額外價值；呼叫專案腳本可確保與專案的協議版本一致 |
 | D22 | 故事影片 | 無 | 以 `project.kind` 區分，同一範本與渲染器，另立 `story-video` Skill 與 `develop_story` / `design` 兩步；角色聲音以 script.md 行首【名字】指定；角色美術一次畫好、以 `rig.js` 擺姿勢 | 渲染、TTS、合成與工作台都與產品無關，分叉範本只會讓兩邊漂移；一個角色檔重複使用才能讓角色從頭到尾一致，也省 token；只把該段有說話的角色聲音算進 hash，換一個角色的聲音不必重做整部片 |
+| D23 | 產生 BGM | D16 原為只接受自備音檔，不做 AI 生成音樂 | 加入可選的 `audio.music`：符號式作曲（preset + 和弦進行 + 每 scene 強度）以純 JS 合成，輸出仍經 `audio.bgm` 使用 | 自備音樂常有授權疑慮且長度不合；符號式在本機、可重現、無新依賴，長度與段落能精確對齊 scene；生成模型（需 GPU、授權各異）與連網服務留待之後以 provider 擴充 |
+| D24 | 配樂由 Agent 作曲 | D23 只有整首一組設定，由 seed 補齊 | 加入 `sections`、`themes`（可綁角色）、`cues`，並新增 `/video-music` 操作：分鏡確認後引導使用者選擇來源、風格（試聽）與逐段配樂計畫（`--preview` 試聽整首） | 配樂要跟著劇情走才有意義；Agent 擅長讀故事做決策，不擅長逐音寫出好聽的編曲，因此只讓 Agent 寫決策與短主題，和聲、對齊、合成由引擎保證；放在分鏡之後，段落已定、又還沒開始渲染 |

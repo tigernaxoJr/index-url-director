@@ -261,6 +261,7 @@ class Main(Scene):
 
 ```bash
 pnpm run status                                   # 確認沒有未完成或過期的 scene
+pnpm run music                                    # 有 audio.music 時：依目前長度產生 assets/music.mp3
 pnpm run assemble                                 # → output/final.mp4、output/final.srt
 pnpm run state project --status completed
 ```
@@ -278,11 +279,11 @@ pnpm run state project --status completed
 | BGM | `audio.bgm` | 循環播放到影片結束，音量 `bgmVolume`，頭尾各淡入淡出 1 秒；`ducking: true` 時旁白出現處自動壓低 |
 
 - `captions.mode: none` 不產生 `final.srt`。
-- `audio.bgm` 指定的檔案不存在時，略過 BGM 並警告，不算失敗。BGM 由使用者自備，不要替使用者下載音樂。
-- BGM、scene 順序只影響合成：修改它們只需重新 `pnpm run assemble`，不需要重做 scene。字幕樣式在 `srt` 模式下也一樣；**`burn` 模式下修改 `captions`（含切換成或離開 `burn`）會使所有 scene 過期**，要重新渲染全部 scene，動手前先告訴使用者需要等待。
-- assemble 直接串接各 scene 的畫面，只重新編碼每個轉場那 0.5 秒，通常幾秒內完成，不必事先提醒使用者等待。
-- 轉場會讓成片比各 scene 加總短（每個轉場 0.5 秒）。旁白預設留有 0.5 秒尾音，轉場只會蓋到這段靜音；若 scene 用 `durationSec` 強制秒數且旁白講到最後一刻，轉場會蓋到旁白結尾，這時把該 scene 下一個的 `transitionIn` 改為 `none`。
-- 合成失敗時，既有的 `output/final.mp4` 不會被刪除或覆蓋。
+- `audio.bgm` 指定的檔案不存在時，略過 BGM 並警告，不算失敗。不要替使用者從網路下載音樂；使用者沒有自備音樂時，可以用下面的方式產生。
+
+### <a id="music"></a>產生 BGM
+
+`audio.music` 有設定時，assemble 前先執行 `pnpm run music`，依目前各 scene 長度產生 `assets/music.mp3`。怎麼和使用者決定配樂、怎麼逐段作曲，見 [music-guide.md](music-guide.md)；產生與重跑的時機見 [music-guide.md#generate](music-guide.md#generate)。
 
 ### 完成
 

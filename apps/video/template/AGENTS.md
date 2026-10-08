@@ -31,6 +31,7 @@
 | 1 初始化 | 由 Skill 或網站 `agent-guide.md` 執行（專案建立前沒有專案指令） | `initialized` | — |
 | 2 分析產品 | `/video-analyze` | `analyzed` | **是**：確認對象、風格與影片長度 |
 | 3 分鏡與旁白 | `/video-storyboard` | `script_generated` | **是**：分鏡與完整旁白稿審閱 |
+| 3.5 配樂 | `/video-music` | — | **是**：選擇與試聽背景音樂 |
 | 4 產生 scene | `/video-scene <id\|all>` | `producing` → `ready_to_assemble` | **是**：每個 scene 預覽 |
 | 5 合成 | `/video-assemble` | `completed` | 回報結果 |
 
@@ -42,12 +43,15 @@
 | 2 整理故事 | `/video-story` | `analyzed` | **是**：故事定稿、對象、風格與長度 |
 | 3 美術與角色 | `/video-design` | `designed` | **是**：角色設定稿與每個角色的聲音 |
 | 4 分鏡、旁白與對白 | `/video-storyboard` | `script_generated` | **是**：分鏡與完整稿審閱 |
+| 4.5 配樂 | `/video-music` | — | **是**：選擇與試聽背景音樂、角色主題 |
 | 5 產生 scene | `/video-scene <id\|all>` | `producing` → `ready_to_assemble` | **是**：每個 scene 預覽 |
 | 6 合成 | `/video-assemble` | `completed` | 回報結果 |
 
 故事專案的 `script.md` 中，以 `【角色名】` 開頭的行由 `project.cast` 裡同名的角色、用他的聲音說；其餘是旁白。動畫模組匯入的共用美術（`@/assets/cast/…`、`@/assets/sets/…`）要列在 `visual.motion.uses`，改了美術才會自動標示需要重做。
 
 影片做到一半或已合成後，仍可再執行 `/video-storyboard` 重新規劃分鏡：只修改被點名的段落，保留的段落沿用現有影片，確認後以 `/video-sync` 只重做有變更的段落並重新合成。
+
+分鏡確認後、開始製作 scene 前，若還沒決定背景音樂（`project.audio` 沒有 `bgm` 也沒有 `music`），先執行 `/video-music` 引導使用者選擇；之後隨時可以再用它修改配樂。
 
 隨時可用：`/video-status`（狀態摘要）、`/video-sync`（只重做有變更的 scene 並重新合成）、`/video-approve <id>`（核准）、`/video-translate <locale>`（複製專案並翻譯）。
 
@@ -137,6 +141,7 @@ draft → assets_ready → rendering → rendered → approved
 | `pnpm run tts --sample <角色id\|narrator>` | 產生試聽檔 `brief/voices/<id>.mp3`；`--text "…"` 指定句子 |
 | `pnpm run capture <id>` | 擷取網頁畫面 |
 | `pnpm run manim <id>` | `visual.type` 為 `manim` 的 scene：以 Manim 渲染 `assets/manim.mp4`（先 `tts`，動畫才能對齊旁白） |
+| `pnpm run music` | 依 `audio.music` 產生配樂 `assets/music.mp3`（長度對齊成片，先 `tts`）；`--preview` 在配音前依字數估算長度，試聽整首 `brief/music/preview.mp3`；`--sample` 產生風格試聽檔 `brief/music/sample.mp3`。做法見 Skill `music-guide.md` |
 | `pnpm run login` | 打開瀏覽器視窗讓使用者自己登入產品；`--clear` 清除保存的登入 |
 | `pnpm run render:scene <id>…` | 渲染 scene；多個 id 時平行渲染（`--jobs N`）；單一 scene 也以多個瀏覽器分攤影格（`--pages N`） |
 | `pnpm run assemble` | 依順序合成 `output/final.mp4` |

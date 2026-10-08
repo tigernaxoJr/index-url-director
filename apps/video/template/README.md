@@ -20,6 +20,7 @@
 | `/video-assemble` | 合成 `output/final.mp4` 與字幕檔 |
 | `/video-sync` | 你改過文案或設定後，只重做受影響的部分 |
 | `/video-status` | 查看目前進度 |
+| `/video-music` | 決定背景音樂：自動配樂、用自己的音樂或不要音樂，並試聽 |
 | `/video-approve <id>` | 核准某個 scene |
 | `/video-translate <locale>` | 複製一份專案並翻譯成其他語言 |
 

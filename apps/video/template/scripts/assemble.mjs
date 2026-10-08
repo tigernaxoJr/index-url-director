@@ -58,6 +58,13 @@ run(async (argv) => {
     const file = resolveProjectPath(root, root, audio.bgm)
     if (existsSync(file)) bgm = { file, volume: audio.bgmVolume ?? 0.25, ducking: audio.ducking ?? true }
     else warnings.push(`audio.bgm ${audio.bgm} not found; assembling without background music`)
+    const info = join(root, DEFAULTS.musicInfoFile)
+    if (bgm && file === join(root, DEFAULTS.musicFile) && existsSync(info)) {
+      const made = JSON.parse(readFileSync(info, 'utf8')).totalSec
+      if (Math.abs(made - timeline.total) > 0.05) {
+        warnings.push(`${DEFAULTS.musicFile} was made for ${made}s but the video is ${timeline.total.toFixed(2)}s; run pnpm run music to fit it again`)
+      }
+    }
   }
 
   const work = join(root, '.tmp', 'assemble')

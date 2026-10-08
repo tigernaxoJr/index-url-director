@@ -198,7 +198,7 @@
         },
         { "id": "validate", "do": "pnpm run validate" }
       ],
-      "checkpoint": "列出分鏡總覽（每個 scene 的標題、purpose、畫面、預估秒數），再逐段列出完整旁白稿與畫面文字，請使用者審閱。使用者明確確認前不得執行 tts、capture 或 render；確認後才可進入 build_scene。重新規劃時，總覽多一欄標示每段是保留、修改、新增或移除，並在寫入任何檔案前請使用者確認；確認後寫入並執行 sync。",
+      "checkpoint": "列出分鏡總覽（每個 scene 的標題、purpose、畫面、預估秒數），再逐段列出完整旁白稿與畫面文字，請使用者審閱。使用者明確確認前不得執行 tts、capture 或 render；確認後才可進入 build_scene。重新規劃時，總覽多一欄標示每段是保留、修改、新增或移除，並在寫入任何檔案前請使用者確認；確認後寫入並執行 sync。分鏡確認後，若 project.audio 還沒有 bgm 也沒有 music（尚未決定配樂），進入 build_scene 前先執行 music 操作。",
       "guide": "skills/product-video/script-guide.md"
     },
     {
@@ -277,14 +277,22 @@
       "reads": [
         { "path": "{dir}/output/scene.mp4" },
         { "path": "{dir}/assets/captions.json" },
-        { "path": "project.audio.bgm", "optional": true }
+        { "path": "project.audio.bgm", "optional": true },
+        { "path": "project.audio.music", "optional": true }
       ],
       "writes": [
+        { "path": "assets/music.mp3", "optional": true, "note": "project.audio.music 有設定時由 pnpm run music 產生" },
+        { "path": "assets/music.json", "optional": true, "note": "小節與段落時間" },
         { "path": "output/final.mp4" },
         { "path": "output/final.srt", "optional": true, "note": "captions.mode 為 none 時不產生" }
       ],
       "actions": [
         { "id": "check", "do": "pnpm run status；有未完成或過期的 scene 時列出並停止。" },
+        {
+          "id": "music",
+          "do": "pnpm run music（依目前各 scene 長度產生配樂，做法見 music-guide.md#generate）；audio.bgm 不是 assets/music.mp3 時以 pnpm run state project --patch-file 設定。",
+          "when": "project.audio.music 有設定，且 assets/music.mp3 不存在或 scene 長度已改變（assemble 會警告）"
+        },
         { "id": "assemble", "do": "pnpm run assemble" },
         {
           "id": "done",
@@ -297,6 +305,35 @@
     }
   ],
   "operations": [
+    {
+      "id": "music",
+      "title": "配樂",
+      "command": "/video-music",
+      "scope": "project",
+      "requires": { "projectStatus": ["script_generated", "producing", "ready_to_assemble", "completed"] },
+      "reads": [
+        { "path": "brief/product-brief.md", "optional": true, "note": "product 專案" },
+        { "path": "brief/story.md", "optional": true, "note": "story 專案；另讀 project.cast" },
+        { "path": "{dir}/scene.json" },
+        { "path": "{dir}/script.md" },
+        { "path": "project.audio", "optional": true, "note": "修改既有配樂時" }
+      ],
+      "writes": [
+        { "path": "video.project.json", "note": "project.audio（bgm、bgmVolume、music）" },
+        { "path": "brief/music/", "optional": true, "note": "sample.mp3、preview.mp3 試聽檔" }
+      ],
+      "actions": [
+        { "id": "source", "do": "用白話問使用者要哪一種背景音樂並附建議：自動配樂（建議）、用自己的音樂檔、不要背景音樂。一次只問一件事。" },
+        { "id": "own_file", "do": "請使用者把音樂檔放進專案的 assets/ 資料夾，提醒要有使用授權；不替使用者下載音樂。以 pnpm run state 設定 audio.bgm，移除 audio.music。", "when": "使用者選擇自己的音樂" },
+        { "id": "none", "do": "以 pnpm run state 把 audio.bgm 設為 null 並移除 audio.music，之後不再主動詢問。", "when": "使用者不要背景音樂" },
+        { "id": "style", "do": "依 brief 提出 1–2 個 preset，各用 2 個不同 seed 寫入 audio.music 後執行 pnpm run music --sample（每次另存試聽檔，例如 brief/music/<preset>-<seed>.mp3），請使用者試聽挑選。", "when": "自動配樂" },
+        { "id": "plan", "do": "讀 brief 與每段 script.md，寫出逐段配樂計畫（強度、調式、樂器、旋律、事件與理由），故事專案為主要角色寫主題旋律；先給使用者看表格。", "when": "自動配樂" },
+        { "id": "preview", "do": "以 pnpm run state project --patch-file 寫入 audio.music（與 audio.bgm: assets/music.mp3），執行 pnpm run music --preview 產生 brief/music/preview.mp3 讓使用者聽整首。", "when": "自動配樂" },
+        { "id": "revise", "do": "使用者用白話提出修改（例如「第三段再緊張一點」）時，只改對應的 sections、themes 或 cues，再執行 --preview。", "when": "使用者要求修改" }
+      ],
+      "checkpoint": "自動配樂時，給使用者看逐段配樂計畫並播放 brief/music/preview.mp3，使用者明確確認後才結束。正式的 assets/music.mp3 在所有 scene 有旁白音檔後，於 assemble 前以 pnpm run music 產生。",
+      "guide": "skills/product-video/music-guide.md"
+    },
     {
       "id": "sync",
       "title": "同步變更",

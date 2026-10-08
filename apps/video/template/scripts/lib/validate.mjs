@@ -40,6 +40,7 @@ export function validateProject(root, overrides = new Map()) {
       errors.push(`${PROJECT_FILE}: audio.bgm ${err.message}`)
     }
   }
+  if (p.audio?.music) checkMusic(p, project.scenes, errors, warnings)
 
   const castNames = new Set()
   const castIds = new Set()
@@ -135,5 +136,26 @@ export function narrationText(script) {
 export function assertValid(result) {
   if (result.errors.length) {
     throw new UsageError(`validation failed:\n${result.errors.map((e) => `  - ${e}`).join('\n')}`)
+  }
+}
+
+/** References inside audio.music that the schema cannot check: scenes, themes and cast ids. */
+function checkMusic(p, scenes, errors, warnings) {
+  const music = p.audio.music
+  const where = `${PROJECT_FILE}: audio.music`
+  const sceneIds = new Set(scenes.map((s) => s.id))
+  const themeIds = new Set()
+  for (const theme of music.themes ?? []) {
+    if (themeIds.has(theme.id)) errors.push(`${where}.themes: duplicate id ${theme.id}`)
+    themeIds.add(theme.id)
+    if (theme.cast && !(p.cast ?? []).some((m) => m.id === theme.cast)) warnings.push(`${where}.themes ${theme.id}: cast ${theme.cast} is not in project.cast`)
+    if (theme.notes.some((n) => n.beat + n.beats > 16)) errors.push(`${where}.themes ${theme.id}: notes run past 16 beats (4 bars)`)
+  }
+  for (const [id, section] of Object.entries(music.sections ?? {})) {
+    if (!sceneIds.has(id)) warnings.push(`${where}.sections lists ${id}, which is not in scenes`)
+    if (section.theme && !themeIds.has(section.theme)) errors.push(`${where}.sections.${id}.theme: no theme with id ${section.theme}`)
+  }
+  for (const cue of music.cues ?? []) {
+    if (!sceneIds.has(cue.scene)) errors.push(`${where}.cues: scene ${cue.scene} is not in scenes`)
   }
 }

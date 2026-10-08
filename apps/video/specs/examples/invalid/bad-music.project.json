@@ -1,0 +1,66 @@
+{
+  "$schema": "./schemas/project.schema.json",
+  "specVersion": "1.0.0",
+  "project": {
+    "id": "8f1c2e0a-5b7d-4c3e-9a1f-2d6b8e4c7a90",
+    "name": "Product Launch Demo",
+    "sources": {
+      "productUrl": "https://example.com",
+      "requiresLogin": true,
+      "sourceCodePath": "../my-product",
+      "description": "使用者補充的產品說明",
+      "referenceVideoUrl": null
+    },
+    "targetAudience": "開發者",
+    "language": "zh-TW",
+    "format": {
+      "aspectRatio": "16:9",
+      "width": 1920,
+      "height": 1080,
+      "fps": 30,
+      "targetDurationSec": 45
+    },
+    "audio": {
+      "music": {
+        "progression": [
+          "I",
+          "VIII"
+        ]
+      }
+    },
+    "captions": {
+      "mode": "srt",
+      "style": {
+        "fontFamily": "Noto Sans TC",
+        "fontSize": 48,
+        "position": "bottom"
+      }
+    },
+    "tts": {
+      "provider": "edge-tts",
+      "voice": "zh-TW-HsiaoChenNeural",
+      "consent": {
+        "onlineTts": true,
+        "grantedAt": "2026-09-30T13:00:00Z"
+      }
+    },
+    "x-team": "growth"
+  },
+  "scenes": [
+    {
+      "id": "scene-001",
+      "dir": "scenes/001-hook"
+    },
+    {
+      "id": "scene-002",
+      "dir": "scenes/002-problem"
+    },
+    {
+      "id": "scene-003",
+      "dir": "scenes/003-solution"
+    }
+  ],
+  "status": "producing",
+  "updatedAt": "2026-09-30T14:00:00Z",
+  "updatedBy": "agent"
+}

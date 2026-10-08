@@ -52,6 +52,7 @@ description: 在使用者本機把故事做成 SVG 動畫影片：引導使用�
 | `/video-story` 整理故事 | `analyzed` | [story-guide.md#develop](story-guide.md#develop) |
 | `/video-design` 美術與角色 | `designed` | [design-guide.md](design-guide.md) |
 | `/video-storyboard` 分鏡、旁白與對白 | `script_generated` | [story-guide.md#storyboard](story-guide.md#storyboard)；已有 scene 時見 [story-guide.md#revise](story-guide.md#revise) |
+| `/video-music` 配樂（分鏡確認後；為主要角色寫主題旋律） | — | [music-guide.md](../product-video/music-guide.md) |
 | `/video-scene` 產生 scene | `producing` → `ready_to_assemble` | [design-guide.md#animate](design-guide.md#animate)，渲染流程見 [rendering-guide.md](../product-video/rendering-guide.md) |
 | `/video-assemble` 合成 | `completed` | [rendering-guide.md#assemble](../product-video/rendering-guide.md#assemble) |
 | `/video-sync` 同步變更 | — | [workflow.md#sync](../product-video/workflow.md#sync) |

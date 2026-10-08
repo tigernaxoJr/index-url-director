@@ -23,7 +23,89 @@
     "audio": {
       "bgm": "assets/bgm.mp3",
       "bgmVolume": 0.25,
-      "ducking": true
+      "ducking": true,
+      "music": {
+        "preset": "corporate",
+        "instruments": [
+          "piano",
+          "pad",
+          "bass",
+          "drums"
+        ],
+        "key": "D",
+        "progression": [
+          "I",
+          "V",
+          "vi",
+          "IV"
+        ],
+        "seed": 3,
+        "sections": {
+          "scene-001": {
+            "energy": "high"
+          },
+          "scene-002": {
+            "energy": "low",
+            "mode": "minor",
+            "instruments": [
+              "strings",
+              "bass"
+            ],
+            "melody": false
+          }
+        },
+        "themes": [
+          {
+            "id": "main",
+            "instrument": "piano",
+            "notes": [
+              {
+                "beat": 0,
+                "beats": 1,
+                "degree": 1
+              },
+              {
+                "beat": 1,
+                "beats": 1,
+                "degree": 3
+              },
+              {
+                "beat": 2,
+                "beats": 2,
+                "degree": 5
+              },
+              {
+                "beat": 4,
+                "beats": 1,
+                "degree": 6
+              },
+              {
+                "beat": 5,
+                "beats": 1,
+                "degree": 5
+              },
+              {
+                "beat": 6,
+                "beats": 2,
+                "degree": 3
+              }
+            ]
+          }
+        ],
+        "cues": [
+          {
+            "scene": "scene-002",
+            "at": 2.5,
+            "type": "dropout",
+            "beats": 1
+          },
+          {
+            "scene": "scene-002",
+            "at": 2.5,
+            "type": "hit"
+          }
+        ]
+      }
     },
     "captions": {
       "mode": "srt",

@@ -106,7 +106,7 @@ export interface VideoProjectJson {
       targetDurationSec?: number;
     };
     /**
-     * BGM 設定，只在 assemble 階段使用（SPEC §7.5）。
+     * BGM 設定，只在 assemble 階段使用，不影響 scene 的 inputHash（SPEC §7.5）。
      */
     audio?: {
       /**
@@ -115,6 +115,164 @@ export interface VideoProjectJson {
       bgm?: string | null;
       bgmVolume?: number;
       ducking?: boolean;
+      /**
+       * 自動產生的純樂器 BGM（pnpm run music → assets/music.mp3，SPEC §7.5，做法見 Skill music-guide.md）。所有欄位都可省略：樂器、速度、調式沿用 preset；調性、和弦進行、節奏型與旋律由 seed 挑選，換 seed 即得同風格的另一首。sections、themes、cues 讓 Agent 依故事逐段作曲。要使用產生的音樂，audio.bgm 設為 assets/music.mp3。
+       */
+      music?: {
+        /**
+         * 風格：corporate 明亮科技、ambient 空靈、lofi 慵懶、cinematic 壯闊、playful 輕快。
+         */
+        preset?: "corporate" | "ambient" | "lofi" | "cinematic" | "playful";
+        /**
+         * 使用的樂器，省略時用 preset 的組合。
+         *
+         * @minItems 1
+         */
+        instruments?: [
+          "piano" | "pad" | "strings" | "pluck" | "marimba" | "bell" | "bass" | "drums",
+          ...("piano" | "pad" | "strings" | "pluck" | "marimba" | "bell" | "bass" | "drums")[]
+        ];
+        bpm?: number;
+        /**
+         * 主音；省略時由 seed 挑選。
+         */
+        key?:
+          "C" | "C#" | "Db" | "D" | "D#" | "Eb" | "E" | "F" | "F#" | "Gb" | "G" | "G#" | "Ab" | "A" | "A#" | "Bb" | "B";
+        mode?: "major" | "minor";
+        /**
+         * 和弦進行，每小節一個，循環使用；羅馬數字 I–VII（大小寫不影響，和弦性質依調性），可加 7 表示七和弦。省略時由 seed 從 preset 的進行中挑選。
+         *
+         * @minItems 1
+         */
+        progression?: [string, ...string[]];
+        /**
+         * 各 scene 的配樂（scene id → 設定），未列出的 scene 沿用整首的設定、強度為 mid。每個 scene 的音樂從離它起點最近的小節線開始，和弦進行從頭來。
+         */
+        sections?: {
+          [k: string]:
+            | {
+                /**
+                 * low 只有和聲，mid 加入節奏，high 最熱鬧。
+                 */
+                energy?: "low" | "mid" | "high";
+                key?:
+                  | "C"
+                  | "C#"
+                  | "Db"
+                  | "D"
+                  | "D#"
+                  | "Eb"
+                  | "E"
+                  | "F"
+                  | "F#"
+                  | "Gb"
+                  | "G"
+                  | "G#"
+                  | "Ab"
+                  | "A"
+                  | "A#"
+                  | "Bb"
+                  | "B";
+                mode?: "major" | "minor";
+                /**
+                 * 每小節一個和弦，循環使用；羅馬數字 I–VII（大小寫不影響，和弦性質依調性），可加 7 表示七和弦。
+                 *
+                 * @minItems 1
+                 */
+                progression?: [string, ...string[]];
+                /**
+                 * @minItems 1
+                 */
+                instruments?: [
+                  "piano" | "pad" | "strings" | "pluck" | "marimba" | "bell" | "bass" | "drums",
+                  ...("piano" | "pad" | "strings" | "pluck" | "marimba" | "bell" | "bass" | "drums")[]
+                ];
+                /**
+                 * 這段演奏的主題 id（覆寫依角色自動挑的主題）。
+                 */
+                theme?: string;
+                /**
+                 * 這段是否有旋律。
+                 */
+                melody?: boolean;
+              }
+            | undefined;
+        };
+        /**
+         * Agent 寫的主題旋律。綁 cast 的主題在該角色說話的 scene 演奏（主導動機）；沒綁角色的是主旋律，用在沒有其他主題的 scene。都沒有時用 seed 產生的旋律。
+         */
+        themes?: {
+          id: string;
+          /**
+           * 綁定的角色 id（project.cast）。
+           */
+          cast?: string;
+          /**
+           * 演奏這個主題的樂器（該 scene 有用到時）；省略時用 preset 的主奏樂器。
+           */
+          instrument?: "piano" | "pluck" | "marimba" | "bell" | "strings";
+          /**
+           * 最長 4 小節（16 拍）。degree 是音階級數：1 為主音（do），8 為高八度的 do，0 與負數往下（0 為低音 si）。依 scene 的調性與調式演奏：大調寫的主題在小調 scene 自動變成小調版本。每小節第一拍不是和弦音時，會移到最近的和弦音。
+           *
+           * @minItems 2
+           */
+          notes: [
+            {
+              /**
+               * 從主題開頭算起的拍數（0 起算，可為 0.5 等半拍）。
+               */
+              beat: number;
+              /**
+               * 長度（拍）。
+               */
+              beats: number;
+              degree: number;
+            },
+            {
+              /**
+               * 從主題開頭算起的拍數（0 起算，可為 0.5 等半拍）。
+               */
+              beat: number;
+              /**
+               * 長度（拍）。
+               */
+              beats: number;
+              degree: number;
+            },
+            ...{
+              /**
+               * 從主題開頭算起的拍數（0 起算，可為 0.5 等半拍）。
+               */
+              beat: number;
+              /**
+               * 長度（拍）。
+               */
+              beats: number;
+              degree: number;
+            }[]
+          ];
+        }[];
+        /**
+         * 配樂事件，對齊到最近的拍點：hit 重擊（大鼓、鈸、低音）、dropout 在該時間點之前靜音 beats 拍（預設 1）、swell 在該時間點之前漸強 beats 拍（預設 4）。常見組合：swell → dropout → hit。
+         */
+        cues?: {
+          scene: string;
+          /**
+           * 從 scene 開頭算起的秒數。
+           */
+          at?: number;
+          type: "hit" | "dropout" | "swell";
+          beats?: number;
+        }[];
+        /**
+         * mid、high 段落是否有旋律（由 preset 的主奏樂器演奏）。旋律搶旁白時設為 false。
+         */
+        melody?: boolean;
+        /**
+         * 決定未指定的調性、和弦進行、節奏型與旋律。換一個數字得到同風格的另一首；喜歡的版本固定這個數字，重跑結果不變。
+         */
+        seed?: number;
+      };
     };
     /**
      * 字幕設定，只在 assemble 階段使用，不納入 scene 的 inputHash（SPEC §7.5）。
