@@ -688,7 +688,9 @@ UI 的目的 **不是執行 AI**，而是將本機專案與 Agent 工作狀態�
 - 使用 **File System Access API**：使用者在首頁步驟 1 點擊「選擇或建立資料夾」（新專案時在 Agent 開始之前，見 §9.2）→ `window.showDirectoryPicker({ mode: "readwrite" })` → 取得 `FileSystemDirectoryHandle`。
 - **不使用** `fetch("file://…")`（瀏覽器禁止）。
 - 支援瀏覽器：Chrome / Edge（桌面版）；需 HTTPS 或 localhost。Firefox / Safari 顯示唯讀提示或引導改用支援的瀏覽器。
-- Directory handle 存入 IndexedDB，下次開啟時請求重新授權即可，免重新選擇。
+- Directory handle 存入 IndexedDB 的「最近的專案」清單（最多 12 筆，以 `isSameEntry()` 去重，所有分頁共用），下次開啟時請求重新授權即可，免重新選擇。
+- 每個分頁各自開一個專案，記在網址 `?p=<id>`，只輪詢這個專案；重新整理或書籤會重開同一個專案，不同分頁可同時看不同專案。網址沒有 `?p` 時首頁列出最近的專案，點一下即開啟。
+- 工作台頂端的專案名稱是切換選單：切換到最近的專案（Ctrl＋點選在新分頁開啟）、開啟其他資料夾、關閉專案。有未儲存的修改時先確認。關閉或從清單移除都不會刪除資料夾裡的檔案。
 - **更新偵測**：每 2 秒輪詢 `video.project.json` 與各 `scene.json` 的 `lastModified`（File System Observer API 可用時優先使用）；連上 Companion 時改用其 WebSocket 推送（見 §2.1），輪詢降為每 10 秒一次，只補檔案監看漏掉的事件；Companion 斷線後頁面自動重連（1 → 30 秒退避），連上時重新載入一次。
 - **反向通知**：模式 A 下 UI 無法喚起 Agent，只能標記 `stale` 並提示使用者執行 `/video-sync`。
 

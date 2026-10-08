@@ -1,9 +1,11 @@
 // App state: the open project folder, the loaded project, polling (SPEC §9.1), and a single path
 // for running writes so conflicts and lock waits are reported the same way everywhere.
+// Each tab works on one project at a time, named in its URL (?p=<id>), and polls only that one;
+// the recently opened folders are shared by all tabs so switching takes one click.
 import { reactive, shallowRef } from 'vue'
 import { companion, run as runAction } from './companion'
 import { ensurePermission, isSupported, tryFile } from './fsa'
-import { forgetHandle, loadHandle, saveHandle } from './idb'
+import { forget, listRecent, remember, type Recent } from './idb'
 import { PROJECT_FILE, fingerprint, loadActivity, loadProject, readyForNewProject, type ProjectState } from './project'
 import { type TemplateDiff, templateDiff, updateTemplate } from './template'
 import type { VideoActivityJson } from '../types/protocol'
@@ -12,6 +14,8 @@ import { LockedError } from './writes'
 const POLL_MS = 2000
 /** With the Companion pushing changes, polling only backs up a missed file-watch event. */
 const POLL_PUSHED_MS = 10_000
+/** The URL query parameter naming this tab's project. */
+const PARAM = 'p'
 
 export const root = shallowRef<FileSystemDirectoryHandle | null>(null)
 export const state = shallowRef<ProjectState | null>(null)
@@ -19,10 +23,14 @@ export const state = shallowRef<ProjectState | null>(null)
 export const activity = shallowRef<VideoActivityJson | null>(null)
 /** The project's tools differ from this site's template (checked once per opened folder). */
 export const outdated = shallowRef<TemplateDiff | null>(null)
+/** Recently opened folders, newest first. */
+export const recent = shallowRef<Recent[]>([])
+/** The recent entry of the open folder. */
+export const currentId = shallowRef<string | null>(null)
 export const ui = reactive({
   supported: isSupported(),
   /** A folder remembered from last visit that still needs the user to re-grant access. */
-  remembered: null as FileSystemDirectoryHandle | null,
+  remembered: null as Recent | null,
   /** The folder is open but holds no project yet: the page waits for the agent to create it. */
   waiting: false,
   loading: false,
@@ -43,51 +51,95 @@ export function notify(kind: 'ok' | 'warn' | 'error', text: string) {
 }
 
 export async function reload() {
-  if (!root.value) return
+  const dir = root.value
+  if (!dir) return
   try {
-    const next = await loadProject(root.value)
+    const next = await loadProject(dir)
+    const act = await loadActivity(dir)
+    const fp = await fingerprint(dir, next)
+    if (root.value !== dir) return // switched to another project meanwhile
     state.value = next
-    activity.value = await loadActivity(root.value)
+    activity.value = act
     ui.waiting = !next
-    print = await fingerprint(root.value, next)
+    print = fp
     ui.error = null
+    // The agent created or renamed the project: show its name in the recent list.
+    const name = next?.project.project.name
+    const entry = recent.value.find((r) => r.id === currentId.value)
+    if (name && entry && entry.label !== name) recent.value = await remember(dir, name)
   } catch (err) {
-    ui.error = (err as Error).message
+    if (root.value === dir) ui.error = (err as Error).message
   }
 }
 
 async function poll() {
-  if (!root.value || ui.saving || document.hidden) return
+  const dir = root.value
+  if (!dir || ui.saving || document.hidden) return
   if (companion.state === 'ready' && Date.now() - polled < POLL_PUSHED_MS) return
   polled = Date.now()
   try {
-    if ((await fingerprint(root.value, state.value)) !== print) await reload()
+    if ((await fingerprint(dir, state.value)) !== print && root.value === dir) await reload()
   } catch {
     // folder temporarily unavailable; try again next tick
   }
+}
+
+// Coming back to the tab: check right away instead of waiting for the next tick.
+document.addEventListener('visibilitychange', () => {
+  polled = 0
+  poll()
+})
+
+function setUrlProject(id: string | null) {
+  const url = new URL(location.href)
+  if (id) url.searchParams.set(PARAM, id)
+  else url.searchParams.delete(PARAM)
+  history.replaceState(history.state, '', url)
+}
+
+/** Forgets the open project in this tab (the folder stays in the recent list). */
+function reset() {
+  root.value = null
+  state.value = null
+  activity.value = null
+  outdated.value = null
+  currentId.value = null
+  ui.waiting = false
+  print = ''
 }
 
 /**
  * Opens a project folder, or prepares an empty one for a new project (SPEC §9.2). A folder with
  * other files is refused before anything changes, so a wrong pick keeps the previous folder.
  */
-export async function openHandle(handle: FileSystemDirectoryHandle, remember = true) {
+export async function openHandle(handle: FileSystemDirectoryHandle) {
   ui.loading = true
   try {
     if (!(await tryFile(handle, PROJECT_FILE)) && !(await readyForNewProject(handle))) {
-      ui.error = `「${handle.name}」裡已經有其他檔案。請在選擇資料夾的視窗按「新增資料夾」，建立一個空的資料夾來放影片專案。`
+      const text = `「${handle.name}」裡已經有其他檔案。請在選擇資料夾的視窗按「新增資料夾」，建立一個空的資料夾來放影片專案。`
+      if (state.value) notify('error', text)
+      else ui.error = text
       return
     }
+    reset()
     root.value = handle
     ui.remembered = null
     await reload()
     if (ui.error) {
-      root.value = null
+      reset()
+      setUrlProject(null)
       return
     }
-    if (remember) await saveHandle(handle)
+    recent.value = await remember(handle, state.value?.project.project.name)
+    const entry = recent.value.find((r) => r.handle === handle)
+    currentId.value = entry?.id ?? null
+    setUrlProject(currentId.value)
     timer ??= setInterval(poll, POLL_MS)
     outdated.value = state.value ? await templateDiff(handle) : null
+  } catch (err) {
+    reset()
+    setUrlProject(null)
+    ui.error = (err as DOMException).name === 'NotFoundError' ? `找不到資料夾「${handle.name}」，可能已被移動或刪除。` : (err as Error).message
   } finally {
     ui.loading = false
   }
@@ -103,31 +155,49 @@ export async function pickFolder() {
   }
 }
 
-/** On start: offer the folder from last time (permission needs a click, so only remember it here). */
+/**
+ * On start: reopen the project named in this tab's URL. Without one the home page lists the recent
+ * folders. Permission needs a click, so a folder that lost it is only offered (ui.remembered).
+ */
 export async function restore() {
   if (!ui.supported) return
-  const handle = await loadHandle()
-  if (!handle) return
-  if (await ensurePermission(handle, false)) await openHandle(handle, false)
-  else ui.remembered = handle
+  recent.value = await listRecent()
+  const id = new URL(location.href).searchParams.get(PARAM)
+  const entry = id ? recent.value.find((r) => r.id === id) : undefined
+  if (!entry) return setUrlProject(null)
+  if (await ensurePermission(entry.handle, false)) await openHandle(entry.handle)
+  else ui.remembered = entry
+}
+
+/** Opens a recent folder in this tab (a click, so the browser may ask for permission). */
+export async function switchTo(entry: Recent) {
+  if (entry.id === currentId.value) return
+  let granted: boolean
+  try {
+    granted = await ensurePermission(entry.handle, true)
+  } catch (err) {
+    return notify('error', (err as Error).message)
+  }
+  if (granted) await openHandle(entry.handle)
+  else notify('warn', `沒有取得「${entry.handle.name}」的存取權限。`)
 }
 
 export async function reconnect() {
-  const handle = ui.remembered
-  if (!handle) return
-  if (await ensurePermission(handle, true)) await openHandle(handle, false)
-  else notify('warn', '沒有取得資料夾的存取權限。')
+  if (ui.remembered) await switchTo(ui.remembered)
 }
 
-export async function close() {
-  root.value = null
-  state.value = null
-  activity.value = null
-  outdated.value = null
-  ui.waiting = false
+/** Removes a folder from the recent list; its files stay where they are. */
+export async function forgetRecent(id: string) {
+  recent.value = await forget(id)
+  if (ui.remembered?.id === id) ui.remembered = null
+  if (currentId.value === id) close()
+}
+
+export function close() {
+  reset()
+  setUrlProject(null)
   if (timer) clearInterval(timer)
   timer = null
-  await forgetHandle()
 }
 
 /** Runs a write against the current snapshot, then reloads. Returns true on success. */

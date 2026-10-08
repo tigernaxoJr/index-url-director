@@ -49,7 +49,9 @@ before(async () => {
   buildApi({ siteUrl: process.env.SITE_URL, out: outDir })
 
   const { chromium } = await import('playwright')
-  for (const channel of [undefined, 'chrome', 'msedge']) {
+  // Installed Chrome/Edge first: Playwright's bundled Chromium crashes when a page reads an OPFS
+  // handle back from IndexedDB, which the recent-projects list does on every load.
+  for (const channel of ['chrome', 'msedge', undefined]) {
     try {
       browser = await chromium.launch({ channel })
       break
@@ -312,6 +314,48 @@ test('opened project shows scenes; browser inputHash matches the Node scripts', 
   await page.getByTestId('script-view').getByText('立即試用。').click()
   await page.getByTestId('view-list').click()
   assert.match(await page.getByTestId('scene-scene-002').getAttribute('class'), /border-sky-500/, 'clicking a script entry selects that scene')
+})
+
+test('recent projects: each tab names its project in the URL; switching and reopening take one click', async (t) => {
+  const p = fixture()
+  t.after(() => p.cleanup())
+  const app = await openApp(t, p)
+  if (!app) return
+  const { page } = app
+  await page.getByTestId('project-name').waitFor()
+  const projUrl = page.url()
+  assert.match(projUrl, /[?&]p=/)
+
+  await prepareFolder(page, 'other')
+  await page.getByTestId('project-folder').waitFor()
+  const otherUrl = page.url()
+  assert.notEqual(otherUrl, projUrl)
+
+  // A reload (or a bookmark) reopens the project its URL names.
+  await page.goto(projUrl)
+  assert.equal(await page.getByTestId('project-name').textContent(), '網頁測試專案')
+
+  // The header menu lists both folders; picking one switches this tab.
+  await page.getByTestId('project-switcher').click()
+  const entries = page.getByTestId('project-menu').getByTestId('recent-project')
+  assert.equal(await entries.count(), 2)
+  await entries.filter({ hasText: 'other' }).click()
+  assert.match(await page.getByTestId('project-folder').textContent(), /other/)
+  assert.equal(page.url(), otherUrl)
+
+  // Two tabs work on different projects at once.
+  const second = await page.context().newPage()
+  await second.goto(projUrl)
+  await second.getByTestId('project-name').waitFor()
+  assert.match(await page.getByTestId('project-folder').textContent(), /other/)
+
+  // Without a project in the URL, the home page offers the recent folders.
+  await page.goto(`${origin}${BASE}/video/`)
+  const recent = page.getByTestId('recent-projects').getByTestId('recent-project')
+  assert.equal(await recent.count(), 2)
+  await recent.filter({ hasText: '網頁測試專案' }).click()
+  await page.getByTestId('project-name').waitFor()
+  assert.equal(page.url(), projUrl)
 })
 
 test('editing a rendered scene marks it stale, re-derives the project, and shows the sync banner', async (t) => {

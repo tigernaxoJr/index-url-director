@@ -8,8 +8,10 @@ import SceneEditor from './components/SceneEditor.vue'
 import WorkflowBar from './components/WorkflowBar.vue'
 import ActivityBanner from './components/ActivityBanner.vue'
 import CompanionStatus from './components/CompanionStatus.vue'
+import ProjectSwitcher from './components/ProjectSwitcher.vue'
 import { companion, connect, takePairingFromUrl } from './lib/companion'
-import { close, outdated, reload, restore, state, syncTemplate, ui } from './lib/store'
+import type { Recent } from './lib/idb'
+import { close, outdated, pickFolder, reload, restore, state, switchTo, syncTemplate, ui } from './lib/store'
 
 const current = ref<string | null>(null)
 /** The open editor has edits not saved yet. */
@@ -29,10 +31,20 @@ const selected = computed<string | null>({
   },
 })
 
-function closeProject() {
-  if (dirty.value && !confirm('有尚未儲存的修改，仍要關閉專案嗎？')) return
+/** Leaving the project (close or switch) with unsaved edits asks first. */
+function leave(question: string) {
+  if (dirty.value && !confirm(question)) return false
   dirty.value = false
-  close()
+  return true
+}
+function closeProject() {
+  if (leave('有尚未儲存的修改，仍要關閉專案嗎？')) close()
+}
+function switchProject(entry: Recent) {
+  if (leave('有尚未儲存的修改，仍要切換專案嗎？')) switchTo(entry)
+}
+function pickProject() {
+  if (leave('有尚未儲存的修改，仍要開啟其他資料夾嗎？')) pickFolder()
 }
 
 const warnUnsaved = (e: BeforeUnloadEvent) => {
@@ -72,13 +84,10 @@ watch(state, (st) => {
       </span>
       <template v-if="state">
         <span class="hidden text-slate-300 sm:inline dark:text-slate-700" aria-hidden="true">/</span>
-        <span class="min-w-0 truncate text-sm font-medium" data-testid="project-name">{{ state.project.project.name }}</span>
+        <ProjectSwitcher @switch="switchProject" @pick="pickProject" @close="closeProject" />
       </template>
       <span class="ml-auto" />
       <CompanionStatus />
-      <button v-if="state" type="button" class="btn-ghost btn-sm shrink-0" title="關閉專案（檔案會留在資料夾）" @click="closeProject">
-        <Icon name="logout" :size="14" /><span class="hidden sm:inline">關閉專案</span>
-      </button>
     </div>
   </header>
 

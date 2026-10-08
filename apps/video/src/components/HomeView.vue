@@ -3,7 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { tryFile, writeText } from '../lib/fsa'
 import { START_FILE, api, launchCommand, launchMessage, newFolderId, startJson, type SourceHints, type VideoKind } from '../lib/site'
 import { baseName, pathHelp, platform, readSourceFolder } from '../lib/source'
-import { activity, pickFolder, reconnect, root, ui } from '../lib/store'
+import { activity, forgetRecent, pickFolder, reconnect, recent, root, switchTo, ui } from '../lib/store'
 import ActivityBanner from './ActivityBanner.vue'
 import CopyButton from './CopyButton.vue'
 import Icon, { type IconName } from './Icon.vue'
@@ -200,10 +200,23 @@ const links = [
           <template v-else>
             <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">影片專案的所有檔案都會放在這裡。建議新建一個空資料夾，例如「acme-video」。</p>
             <div class="mt-4 flex flex-wrap gap-2">
-              <button v-if="ui.remembered" type="button" class="btn-primary" @click="reconnect"><Icon name="folder" />繼續使用「{{ ui.remembered.name }}」</button>
-              <button type="button" :class="ui.remembered ? 'btn-secondary' : 'btn-primary'" :disabled="ui.loading" data-testid="pick-folder" @click="pickFolder">
+              <button v-if="ui.remembered" type="button" class="btn-primary" :disabled="ui.loading" @click="reconnect"><Icon name="folder" />繼續使用「{{ ui.remembered.label }}」</button>
+              <button type="button" :class="ui.remembered || recent.length ? 'btn-secondary' : 'btn-primary'" :disabled="ui.loading" data-testid="pick-folder" @click="pickFolder">
                 <Icon name="folder" />{{ ui.loading ? '載入中…' : '選擇或建立資料夾…' }}
               </button>
+            </div>
+            <div v-if="recent.length" class="mt-4" data-testid="recent-projects">
+              <p class="text-xs font-medium text-slate-500 dark:text-slate-400">或繼續最近的專案</p>
+              <ul class="mt-1.5 divide-y divide-slate-100 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+                <li v-for="r in recent.filter((r) => r.id !== ui.remembered?.id).slice(0, 6)" :key="r.id" class="flex items-center gap-1 pr-1">
+                  <button type="button" class="flex min-w-0 flex-1 items-center gap-2.5 px-3 py-2 text-left text-sm hover:text-sky-700 dark:hover:text-sky-400" :disabled="ui.loading" data-testid="recent-project" @click="switchTo(r)">
+                    <Icon name="folder" :size="14" class="shrink-0 text-slate-400" />
+                    <span class="min-w-0 flex-1 truncate font-medium">{{ r.label }}</span>
+                    <span v-if="r.label !== r.handle.name" class="hidden max-w-40 truncate text-xs text-slate-500 sm:inline dark:text-slate-400">{{ r.handle.name }}</span>
+                  </button>
+                  <button type="button" class="icon-btn h-7 w-7 shrink-0" :title="`從清單移除「${r.label}」（檔案會留在資料夾）`" @click="forgetRecent(r.id)"><Icon name="x" :size="14" /></button>
+                </li>
+              </ul>
             </div>
             <details class="mt-3 text-sm text-slate-600 dark:text-slate-400">
               <summary class="cursor-pointer select-none hover:text-slate-900 dark:hover:text-slate-200">第一次用？看看怎麼建立資料夾</summary>

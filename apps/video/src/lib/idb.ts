@@ -1,9 +1,21 @@
-// Keeps the last opened project folder handle in IndexedDB, so the next visit only needs the user
-// to re-grant permission instead of picking the folder again (SPEC §9.1).
+// Keeps recently opened project folder handles in IndexedDB, so the next visit only needs the user
+// to re-grant permission instead of picking the folder again (SPEC §9.1). Each tab picks one of
+// them on its own (see store.ts); this list is shared by all tabs.
 
 const DB = 'agent-video-producer'
 const STORE = 'handles'
-const KEY = 'project'
+/** Before the recent list: the single folder from last visit. Read once and folded into the list. */
+const LEGACY_KEY = 'project'
+const KEY = 'recent'
+const MAX = 12
+
+export interface Recent {
+  id: string
+  handle: FileSystemDirectoryHandle
+  /** The project name once a project was loaded from the folder; the folder name until then. */
+  label: string
+  opened: number
+}
 
 function open(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -27,26 +39,43 @@ async function run<T>(mode: IDBTransactionMode, fn: (store: IDBObjectStore) => I
   }
 }
 
-export async function saveHandle(handle: FileSystemDirectoryHandle) {
+async function save(list: Recent[]) {
   try {
-    await run('readwrite', (s) => s.put(handle, KEY))
+    await run('readwrite', (s) => s.put(list, KEY))
   } catch {
     // Private windows may refuse IndexedDB; the app still works for this visit.
   }
 }
 
-export async function loadHandle(): Promise<FileSystemDirectoryHandle | null> {
+/** Recently opened folders, newest first. */
+export async function listRecent(): Promise<Recent[]> {
   try {
-    return ((await run('readonly', (s) => s.get(KEY))) as FileSystemDirectoryHandle | undefined) ?? null
+    const list = ((await run('readonly', (s) => s.get(KEY))) as Recent[] | undefined) ?? []
+    const legacy = (await run('readonly', (s) => s.get(LEGACY_KEY))) as FileSystemDirectoryHandle | undefined
+    if (!legacy) return list
+    await run('readwrite', (s) => s.delete(LEGACY_KEY))
+    return await addTo(list, legacy)
   } catch {
-    return null
+    return []
   }
 }
 
-export async function forgetHandle() {
-  try {
-    await run('readwrite', (s) => s.delete(KEY))
-  } catch {
-    // ignore
-  }
+async function addTo(list: Recent[], handle: FileSystemDirectoryHandle, label?: string): Promise<Recent[]> {
+  let found: Recent | undefined
+  for (const r of list) if (await r.handle.isSameEntry(handle)) found = r
+  const entry: Recent = { id: found?.id ?? crypto.randomUUID(), handle, label: label ?? found?.label ?? handle.name, opened: Date.now() }
+  const next = [entry, ...list.filter((r) => r !== found)].slice(0, MAX)
+  await save(next)
+  return next
+}
+
+/** Puts the folder first in the list (the same folder keeps its id); returns the new list. */
+export async function remember(handle: FileSystemDirectoryHandle, label?: string): Promise<Recent[]> {
+  return addTo(await listRecent(), handle, label)
+}
+
+export async function forget(id: string): Promise<Recent[]> {
+  const next = (await listRecent()).filter((r) => r.id !== id)
+  await save(next)
+  return next
 }
