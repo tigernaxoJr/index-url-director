@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import ActivityBanner from './components/ActivityBanner.vue'
 import PdfViewer from './components/PdfViewer.vue'
 import ProjectPicker from './components/ProjectPicker.vue'
+import ProjectSwitcher from './components/ProjectSwitcher.vue'
 import PromptLauncher from './components/PromptLauncher.vue'
 import SlideDeckView from './components/SlideDeckView.vue'
 import {
@@ -11,11 +12,28 @@ import {
   isPolling,
   lastSync,
   needsSetup,
+  notice,
+  notify,
+  pickFolder,
   pollFiles,
   project,
   resetDirectory,
+  restore,
   start,
+  switchTo,
 } from './lib/store'
+import type { Recent } from './lib/idb'
+
+onMounted(restore)
+
+async function switchProject(entry: Recent) {
+  const error = await switchTo(entry)
+  if (error) notify(error)
+}
+async function pickProject() {
+  const error = await pickFolder()
+  if (error) notify(error)
+}
 
 const activeTab = ref<'slides' | 'pdf' | 'prompt'>('slides')
 // A prepared folder has nothing to preview until the Agent runs: open on the prompt to copy.
@@ -45,7 +63,7 @@ async function reload() {
     <!-- Navbar -->
     <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/85 backdrop-blur dark:border-slate-800 dark:bg-slate-950/85">
       <div class="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
-        <div class="flex items-center gap-3">
+        <div class="flex min-w-0 items-center gap-3">
           <a
             href="../"
             class="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
@@ -58,14 +76,18 @@ async function reload() {
           <span class="flex shrink-0 items-center gap-2 text-sm font-semibold tracking-tight whitespace-nowrap">
             <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 font-mono text-xs font-bold text-white" aria-hidden="true">S</span>
             <span class="hidden sm:inline">Slide Studio</span>
-            <span class="rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300">
+            <span v-if="!dirHandle" class="rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300">
               Slidev + AOFA
             </span>
           </span>
+          <template v-if="dirHandle">
+            <span class="hidden text-slate-300 sm:inline dark:text-slate-700" aria-hidden="true">/</span>
+            <ProjectSwitcher :title="projectTitle" @switch="switchProject" @pick="pickProject" @close="resetDirectory" />
+          </template>
         </div>
 
         <!-- Right Side: Directory status & Actions -->
-        <div v-if="dirHandle" class="flex items-center gap-3">
+        <div v-if="dirHandle" class="flex shrink-0 items-center gap-3">
           <div class="hidden sm:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <span
               class="h-2 w-2 rounded-full"
@@ -87,13 +109,6 @@ async function reload() {
             </svg>
           </button>
 
-          <button
-            type="button"
-            @click="resetDirectory"
-            class="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
-          >
-            更換資料夾
-          </button>
         </div>
       </div>
     </header>
@@ -185,5 +200,14 @@ async function reload() {
         </div>
       </div>
     </main>
+
+    <div
+      v-if="notice"
+      class="fixed inset-x-4 bottom-4 z-40 mx-auto max-w-md rounded-xl bg-rose-700 px-4 py-3 text-sm text-white shadow-lg sm:inset-x-auto sm:right-4"
+      role="alert"
+      data-testid="notice"
+    >
+      {{ notice }}
+    </div>
   </div>
 </template>

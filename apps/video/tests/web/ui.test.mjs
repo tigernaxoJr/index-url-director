@@ -322,12 +322,11 @@ test('recent projects: each tab names its project in the URL; switching and reop
   const app = await openApp(t, p)
   if (!app) return
   const { page } = app
-  await page.getByTestId('project-name').waitFor()
+  await page.waitForURL(/[?&]p=/)
   const projUrl = page.url()
-  assert.match(projUrl, /[?&]p=/)
 
   await prepareFolder(page, 'other')
-  await page.getByTestId('project-folder').waitFor()
+  await page.waitForURL((url) => url.href !== projUrl)
   const otherUrl = page.url()
   assert.notEqual(otherUrl, projUrl)
 
@@ -341,7 +340,7 @@ test('recent projects: each tab names its project in the URL; switching and reop
   assert.equal(await entries.count(), 2)
   await entries.filter({ hasText: 'other' }).click()
   assert.match(await page.getByTestId('project-folder').textContent(), /other/)
-  assert.equal(page.url(), otherUrl)
+  await page.waitForURL(otherUrl)
 
   // Two tabs work on different projects at once.
   const second = await page.context().newPage()
@@ -355,7 +354,7 @@ test('recent projects: each tab names its project in the URL; switching and reop
   assert.equal(await recent.count(), 2)
   await recent.filter({ hasText: '網頁測試專案' }).click()
   await page.getByTestId('project-name').waitFor()
-  assert.equal(page.url(), projUrl)
+  await page.waitForURL(projUrl)
 })
 
 test('editing a rendered scene marks it stale, re-derives the project, and shows the sync banner', async (t) => {
