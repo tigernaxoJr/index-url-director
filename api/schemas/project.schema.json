@@ -1,0 +1,327 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "project.schema.json",
+  "title": "video.project.json",
+  "description": "專案層級定義與 scene 播放順序。scene 內容與狀態存於各自的 scene.json（SPEC §4.1）。",
+  "type": "object",
+  "$ref": "common.schema.json#/$defs/extensions",
+  "unevaluatedProperties": false,
+  "required": ["specVersion", "project", "scenes", "status", "updatedAt", "updatedBy"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "specVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "project": { "$ref": "#/$defs/project" },
+    "scenes": {
+      "description": "陣列順序即影片播放順序。",
+      "type": "array",
+      "items": { "$ref": "#/$defs/sceneRef" }
+    },
+    "status": { "$ref": "#/$defs/projectStatus" },
+    "updatedAt": { "$ref": "common.schema.json#/$defs/timestamp" },
+    "updatedBy": { "$ref": "common.schema.json#/$defs/updatedBy" }
+  },
+  "allOf": [
+    {
+      "description": "分鏡產生後至少要有一個 scene。",
+      "if": {
+        "properties": { "status": { "enum": ["script_generated", "producing", "ready_to_assemble", "completed"] } }
+      },
+      "then": {
+        "properties": { "scenes": { "minItems": 1 } }
+      }
+    }
+  ],
+  "$defs": {
+    "projectStatus": {
+      "description": "SPEC §4.5。",
+      "enum": ["initialized", "analyzed", "designed", "script_generated", "producing", "ready_to_assemble", "completed", "failed"]
+    },
+    "sceneRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "dir"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/sceneId" },
+        "dir": {
+          "description": "scene 目錄，格式 scenes/{三位數}-{slug}。目錄編號為建立時的序號，不代表目前順序。",
+          "type": "string",
+          "pattern": "^scenes/\\d{3}-[a-z0-9]+(-[a-z0-9]+)*$"
+        }
+      }
+    },
+    "project": {
+      "type": "object",
+      "$ref": "common.schema.json#/$defs/extensions",
+      "unevaluatedProperties": false,
+      "required": ["id", "name", "sources", "language", "format", "tts"],
+      "properties": {
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "kind": {
+          "description": "影片類型：product = 產品介紹（Skill product-video）；story = 把故事做成 SVG 動畫影片（Skill story-video）。",
+          "enum": ["product", "story"],
+          "default": "product"
+        },
+        "sources": { "$ref": "#/$defs/sources" },
+        "cast": {
+          "description": "故事的角色與各自的聲音（kind 為 story 時使用）。script.md 中以【name】開頭的行由該角色說；其餘為旁白，用 project.tts。",
+          "type": "array",
+          "items": { "$ref": "#/$defs/castMember" }
+        },
+        "targetAudience": { "type": "string" },
+        "durationAdjust": {
+          "description": "製作中發現某段太趕時：auto = Agent 可自行在限度內調整 scene 長度並事後回報；ask = 每次先詢問使用者。",
+          "enum": ["auto", "ask"],
+          "default": "ask"
+        },
+        "customMotion": {
+          "description": "動畫的使用方式（Skill script-guide.md#custom-motion）。allow = Agent 依需要使用動畫範本與自訂動畫；ask = 範本照用，從零寫的自訂動畫（visual.motion 模組、Manim 程式、新的 SVG 插圖，較耗時與 token）在分鏡審閱時逐段由使用者決定；deny = 不使用動畫。",
+          "enum": ["allow", "deny", "ask"],
+          "default": "allow"
+        },
+        "style": { "description": "影片風格與語氣（例如：專業簡報、活潑社群短片），與使用者確認後填寫。", "type": "string" },
+        "language": { "$ref": "common.schema.json#/$defs/locale" },
+        "translatedFrom": {
+          "description": "由 /video-translate 產生時記錄來源專案（SPEC §4.4）。",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "language"],
+          "properties": {
+            "id": { "type": "string", "format": "uuid" },
+            "language": { "$ref": "common.schema.json#/$defs/locale" }
+          }
+        },
+        "format": { "$ref": "#/$defs/format" },
+        "audio": { "$ref": "#/$defs/audio" },
+        "captions": { "$ref": "#/$defs/captions" },
+        "tts": { "$ref": "#/$defs/tts" }
+      },
+      "if": { "properties": { "kind": { "const": "story" } }, "required": ["kind"] },
+      "then": {
+        "description": "故事專案至少要有故事文字或點子描述。",
+        "properties": {
+          "sources": {
+            "anyOf": [
+              { "required": ["story"], "properties": { "story": { "type": "string", "minLength": 1 } } },
+              { "required": ["description"], "properties": { "description": { "type": "string", "minLength": 1 } } }
+            ]
+          }
+        }
+      },
+      "else": {
+        "description": "產品專案至少要有一種產品來源。",
+        "properties": {
+          "sources": {
+            "anyOf": [
+              { "required": ["productUrl"], "properties": { "productUrl": { "type": "string" } } },
+              { "required": ["sourceCodePath"], "properties": { "sourceCodePath": { "type": "string" } } },
+              { "required": ["description"], "properties": { "description": { "type": "string", "minLength": 1 } } }
+            ]
+          }
+        }
+      }
+    },
+    "castMember": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "description": "英文小寫識別碼，也是美術資料夾名稱（@/assets/cast/<id>/）。", "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+        "name": { "description": "script.md 中【】內使用的名字。", "type": "string", "minLength": 1, "maxLength": 40, "pattern": "^[^【】\\s]+$" },
+        "description": { "description": "外型與個性，給畫圖與挑聲音參考。", "type": "string" },
+        "provider": { "description": "省略時沿用 project.tts.provider。", "$ref": "common.schema.json#/$defs/ttsProvider" },
+        "voice": { "description": "省略時沿用 project.tts.voice。", "type": "string", "minLength": 1 },
+        "art": { "description": "角色部件 SVG 所在資料夾，通常為 @/assets/cast/<id>/。", "$ref": "common.schema.json#/$defs/relPath" }
+      }
+    },
+    "sources": {
+      "description": "影片的來源資料；至少要有哪些依 project.kind 而定。",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "productUrl": { "type": ["string", "null"], "format": "uri", "pattern": "^https?://" },
+        "requiresLogin": {
+          "description": "產品網址要登入才看得到。為 true 時，使用者須先以 pnpm run login 在瀏覽器視窗自行登入，capture 才能執行（gate productLogin）。帳密不寫入任何檔案。",
+          "type": "boolean",
+          "default": false
+        },
+        "sourceCodePath": {
+          "description": "產品原始碼位置，唯讀輸入，可在專案外（相對或絕對路徑）。",
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "description": { "type": ["string", "null"] },
+        "story": {
+          "description": "故事全文、大綱或點子（kind 為 story 時使用）。整理後的定稿在 brief/story.md。",
+          "type": ["string", "null"]
+        },
+        "referenceVideoUrl": {
+          "description": "風格參考影片（可選，SPEC §6.2 Step 2）。",
+          "type": ["string", "null"],
+          "format": "uri"
+        }
+      }
+    },
+    "format": {
+      "description": "寬高須符合 aspectRatio（由 validate.mjs 檢查）。H.264 需偶數寬高。",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["aspectRatio", "width", "height", "fps"],
+      "properties": {
+        "aspectRatio": { "enum": ["16:9", "9:16", "1:1", "4:5"] },
+        "width": { "type": "integer", "minimum": 320, "maximum": 3840, "multipleOf": 2 },
+        "height": { "type": "integer", "minimum": 320, "maximum": 3840, "multipleOf": 2 },
+        "fps": { "enum": [24, 25, 30, 50, 60] },
+        "targetDurationSec": { "type": "number", "minimum": 5, "maximum": 600 }
+      }
+    },
+    "audio": {
+      "description": "BGM 設定，只在 assemble 階段使用，不影響 scene 的 inputHash（SPEC §7.5）。",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "bgm": {
+          "description": "相對於專案根目錄；null 或檔案不存在時略過 BGM。",
+          "anyOf": [{ "$ref": "common.schema.json#/$defs/relPath" }, { "type": "null" }]
+        },
+        "bgmVolume": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.25 },
+        "ducking": { "type": "boolean", "default": true },
+        "music": {
+          "description": "自動產生的純樂器 BGM（pnpm run music → assets/music.mp3，SPEC §7.5，做法見 Skill music-guide.md）。所有欄位都可省略：樂器、速度、調式沿用 preset；調性、和弦進行、節奏型與旋律由 seed 挑選，換 seed 即得同風格的另一首。sections、themes、cues 讓 Agent 依故事逐段作曲。要使用產生的音樂，audio.bgm 設為 assets/music.mp3。",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "preset": { "description": "風格：corporate 明亮科技、ambient 空靈、lofi 慵懶、cinematic 壯闊、playful 輕快。", "enum": ["corporate", "ambient", "lofi", "cinematic", "playful"], "default": "corporate" },
+            "instruments": { "description": "使用的樂器，省略時用 preset 的組合。", "$ref": "#/$defs/musicInstruments" },
+            "bpm": { "type": "integer", "minimum": 50, "maximum": 160 },
+            "key": { "description": "主音；省略時由 seed 挑選。", "$ref": "#/$defs/musicKey" },
+            "mode": { "enum": ["major", "minor"] },
+            "progression": { "description": "和弦進行，每小節一個，循環使用；羅馬數字 I–VII（大小寫不影響，和弦性質依調性），可加 7 表示七和弦。省略時由 seed 從 preset 的進行中挑選。", "$ref": "#/$defs/musicProgression" },
+            "sections": {
+              "description": "各 scene 的配樂（scene id → 設定），未列出的 scene 沿用整首的設定、強度為 mid。每個 scene 的音樂從離它起點最近的小節線開始，和弦進行從頭來。",
+              "type": "object",
+              "propertyNames": { "$ref": "common.schema.json#/$defs/sceneId" },
+              "additionalProperties": { "$ref": "#/$defs/musicSection" }
+            },
+            "themes": {
+              "description": "Agent 寫的主題旋律。綁 cast 的主題在該角色說話的 scene 演奏（主導動機）；沒綁角色的是主旋律，用在沒有其他主題的 scene。都沒有時用 seed 產生的旋律。",
+              "type": "array",
+              "items": { "$ref": "#/$defs/musicTheme" }
+            },
+            "cues": {
+              "description": "配樂事件，對齊到最近的拍點：hit 重擊（大鼓、鈸、低音）、dropout 在該時間點之前靜音 beats 拍（預設 1）、swell 在該時間點之前漸強 beats 拍（預設 4）。常見組合：swell → dropout → hit。",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["scene", "type"],
+                "properties": {
+                  "scene": { "$ref": "common.schema.json#/$defs/sceneId" },
+                  "at": { "description": "從 scene 開頭算起的秒數。", "type": "number", "minimum": 0, "default": 0 },
+                  "type": { "enum": ["hit", "dropout", "swell"] },
+                  "beats": { "type": "number", "exclusiveMinimum": 0, "maximum": 16 }
+                }
+              }
+            },
+            "melody": { "description": "mid、high 段落是否有旋律（由 preset 的主奏樂器演奏）。旋律搶旁白時設為 false。", "type": "boolean", "default": true },
+            "seed": { "description": "決定未指定的調性、和弦進行、節奏型與旋律。換一個數字得到同風格的另一首；喜歡的版本固定這個數字，重跑結果不變。", "type": "integer", "minimum": 0, "default": 1 }
+          }
+        }
+      }
+    },
+    "musicSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "energy": { "description": "low 只有和聲，mid 加入節奏，high 最熱鬧。", "enum": ["low", "mid", "high"], "default": "mid" },
+        "key": { "$ref": "#/$defs/musicKey" },
+        "mode": { "enum": ["major", "minor"] },
+        "progression": { "$ref": "#/$defs/musicProgression" },
+        "instruments": { "$ref": "#/$defs/musicInstruments" },
+        "theme": { "description": "這段演奏的主題 id（覆寫依角色自動挑的主題）。", "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+        "melody": { "description": "這段是否有旋律。", "type": "boolean" }
+      }
+    },
+    "musicTheme": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "notes"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+        "cast": { "description": "綁定的角色 id（project.cast）。", "type": "string", "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$" },
+        "instrument": { "description": "演奏這個主題的樂器（該 scene 有用到時）；省略時用 preset 的主奏樂器。", "enum": ["piano", "pluck", "marimba", "bell", "strings"] },
+        "notes": {
+          "description": "最長 4 小節（16 拍）。degree 是音階級數：1 為主音（do），8 為高八度的 do，0 與負數往下（0 為低音 si）。依 scene 的調性與調式演奏：大調寫的主題在小調 scene 自動變成小調版本。每小節第一拍不是和弦音時，會移到最近的和弦音。",
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["beat", "beats", "degree"],
+            "properties": {
+              "beat": { "description": "從主題開頭算起的拍數（0 起算，可為 0.5 等半拍）。", "type": "number", "minimum": 0, "maximum": 15.5 },
+              "beats": { "description": "長度（拍）。", "type": "number", "exclusiveMinimum": 0, "maximum": 8 },
+              "degree": { "type": "integer", "minimum": -6, "maximum": 15 }
+            }
+          }
+        }
+      }
+    },
+    "musicKey": { "enum": ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B"] },
+    "musicInstruments": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["piano", "pad", "strings", "pluck", "marimba", "bell", "bass", "drums"] }
+    },
+    "musicProgression": {
+      "description": "每小節一個和弦，循環使用；羅馬數字 I–VII（大小寫不影響，和弦性質依調性），可加 7 表示七和弦。",
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "pattern": "^(VII|VI|V|IV|III|II|I|vii|vi|v|iv|iii|ii|i)7?$" }
+    },
+    "captions": {
+      "description": "字幕設定，只在 assemble 階段使用，不納入 scene 的 inputHash（SPEC §7.5）。",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["srt", "burn", "none"], "default": "srt" },
+        "style": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "fontFamily": { "type": "string", "minLength": 1 },
+            "fontSize": { "type": "integer", "minimum": 12, "maximum": 200 },
+            "position": { "enum": ["bottom", "middle", "top"], "default": "bottom" }
+          }
+        }
+      }
+    },
+    "tts": {
+      "description": "專案預設 TTS（SPEC §7.4），scene 可覆寫。",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider"],
+      "properties": {
+        "provider": { "$ref": "common.schema.json#/$defs/ttsProvider" },
+        "voice": { "type": "string", "minLength": 1 },
+        "consent": {
+          "description": "連網 TTS 的使用者同意紀錄。",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["onlineTts"],
+          "properties": {
+            "onlineTts": { "type": "boolean" },
+            "grantedAt": { "$ref": "common.schema.json#/$defs/timestamp" }
+          },
+          "if": { "properties": { "onlineTts": { "const": true } } },
+          "then": { "required": ["grantedAt"] }
+        }
+      },
+      "if": {
+        "properties": { "provider": { "not": { "enum": ["manual", "system"] } } }
+      },
+      "then": { "required": ["voice"] }
+    }
+  }
+}

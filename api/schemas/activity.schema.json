@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "activity.schema.json",
+  "title": "video.activity.json",
+  "description": "Agent 目前在做什麼、是否在等使用者回覆（SPEC §9.2）。只有 Agent 寫入、網頁只讀；不納入版本控制。專案建立前就可以存在（與 video.start.json 並列）。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["message", "waitingForUser", "updatedAt"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "message": {
+      "description": "給使用者看的一句白話，例如「正在錄第 3 段的畫面」「分鏡寫好了，請在對話中確認」。",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "waitingForUser": {
+      "description": "true：Agent 停下來等使用者在對話中回覆（checkpoint、gate、提問）。",
+      "type": "boolean"
+    },
+    "step": {
+      "description": "目前的工作流程步驟或操作（workflow.json 的 id）；不在任何步驟時為 null。",
+      "type": ["string", "null"],
+      "pattern": "^[a-z_]+$"
+    },
+    "scene": {
+      "description": "正在處理的 scene；沒有時為 null。",
+      "oneOf": [{ "$ref": "common.schema.json#/$defs/sceneId" }, { "type": "null" }]
+    },
+    "updatedAt": { "$ref": "common.schema.json#/$defs/timestamp" }
+  }
+}

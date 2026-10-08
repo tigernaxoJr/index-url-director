@@ -1,0 +1,126 @@
+{
+  "name": "slidev-deck",
+  "specVersion": "1.0.0",
+  "zip": {
+    "url": "https://aofa.tigernaxo.com/api/slide/templates/slidev-deck.zip",
+    "sha256": "b6ff18458c3e3a5c6f37f20830ccc325f1e32664312de9f438ca594c8e163307",
+    "size": 13599
+  },
+  "files": [
+    {
+      "path": ".claude/commands/slide-draft.md",
+      "sha256": "bca1df2114fa48cda16358cbbc9f78b4602fdd628f656d57fe94dcaa7187e6c7",
+      "size": 559
+    },
+    {
+      "path": ".claude/commands/slide-export.md",
+      "sha256": "086980159c4c2650eef964d50abc1c3ed2eb770e57fcdd6d03ec39f55a266e40",
+      "size": 528
+    },
+    {
+      "path": ".claude/commands/slide-outline.md",
+      "sha256": "e45dae6264d6c868a44c0fce829dc6c4c470798eeb0aa01e23ab011bdc332258",
+      "size": 571
+    },
+    {
+      "path": ".claude/commands/slide-visual.md",
+      "sha256": "62b4295a752c9063f10e180b10375f8e5ddeee36446aa0472a8c4f272fd9be65",
+      "size": 595
+    },
+    {
+      "path": ".gitignore",
+      "sha256": "657d88550c12778469a94bc97308849afe56dec29dad8d7f0227635bc5738213",
+      "size": 72
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "fbe9e3198cb8f35040566b61e71a2dd76009cbfa1e2a113803cb630eca58b50a",
+      "size": 2440
+    },
+    {
+      "path": "CLAUDE.md",
+      "sha256": "336cc4fbf19beaada7ccf9986414fa91851a8d7a07dfb3ccbe800a69eed0ab49",
+      "size": 11
+    },
+    {
+      "path": "README.md",
+      "sha256": "ae4fb2a6ffa747bd3cc711554194f9e3e06083b725506a799d483f2ffce96faa",
+      "size": 455
+    },
+    {
+      "path": "components/SvgDiagram.vue",
+      "sha256": "6a4ca9f2cec765c6d4f7f763e7a771eb798de9013602b8df5b9a0e52f511b220",
+      "size": 1747
+    },
+    {
+      "path": "components/ThreeGlobe.vue",
+      "sha256": "87b3e8b1a0e089b171c3b57440265428d0f0fb77b9c7200969e337dde0e4d4df",
+      "size": 1670
+    },
+    {
+      "path": "package.json",
+      "sha256": "783bef56e03375b71a7af80a67ca79e2808b80be8f2fc9cc79bea89ab9f7c66a",
+      "size": 666
+    },
+    {
+      "path": "pnpm-workspace.yaml",
+      "sha256": "0802ca5fc4dbbb547015246bf47d00cea8df0e15377f54f251dd568aa0fbc179",
+      "size": 108
+    },
+    {
+      "path": "schemas/activity.schema.json",
+      "sha256": "5dec2f058c3ade73b2474a7eaf624cc612a91e2231294436e6f3023134a07aca",
+      "size": 647
+    },
+    {
+      "path": "schemas/activity.schema.json",
+      "sha256": "5dec2f058c3ade73b2474a7eaf624cc612a91e2231294436e6f3023134a07aca",
+      "size": 647
+    },
+    {
+      "path": "schemas/project.schema.json",
+      "sha256": "00506924d104a7d136d8928bd8c2f1441ab44a29c2cd0b1828c97c3c32d1b1a9",
+      "size": 1141
+    },
+    {
+      "path": "schemas/project.schema.json",
+      "sha256": "00506924d104a7d136d8928bd8c2f1441ab44a29c2cd0b1828c97c3c32d1b1a9",
+      "size": 1141
+    },
+    {
+      "path": "schemas/workflow.json",
+      "sha256": "e0d6715b99bc176ed0f3070e9822c794c89d161a231e8290bd246429299e3afd",
+      "size": 2715
+    },
+    {
+      "path": "schemas/workflow.json",
+      "sha256": "e0d6715b99bc176ed0f3070e9822c794c89d161a231e8290bd246429299e3afd",
+      "size": 2715
+    },
+    {
+      "path": "scripts/lib/schema.mjs",
+      "sha256": "b5f233460624a1610ccf87dc0f333ab81b0aa46562bb63b37e3603e957811203",
+      "size": 1400
+    },
+    {
+      "path": "scripts/state.mjs",
+      "sha256": "1ac47a10a6468430365dbdba6011e2decc8bbeb43a5ec743ad10c1496b4fd826",
+      "size": 2828
+    },
+    {
+      "path": "scripts/validate.mjs",
+      "sha256": "f8157ec53ad34f082795f291596d28b04f527885356f0de848c8d41ad83cfe41",
+      "size": 1197
+    },
+    {
+      "path": "slide.project.json",
+      "sha256": "d7fbcbcf0b43557666f4b872dbe4942cfcf7bc0bfb248cefdc58965069f4df85",
+      "size": 312
+    },
+    {
+      "path": "slides.md",
+      "sha256": "3d06950c61ec80d344890e335f53c86ff7d06e87aa98383c296201bcb69d2d52",
+      "size": 2436
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "common.schema.json",
+  "title": "Agent Video Producer — shared definitions",
+  "description": "project.schema.json 與 scene.schema.json 共用的型別定義。",
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)$"
+    },
+    "timestamp": {
+      "description": "ISO 8601 / RFC 3339 日期時間，須含時區。",
+      "type": "string",
+      "format": "date-time"
+    },
+    "locale": {
+      "description": "BCP 47 語言標籤，例如 zh-TW、en、en-US。",
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|\\d{3}))?$"
+    },
+    "sceneId": {
+      "type": "string",
+      "pattern": "^scene-\\d{3}$"
+    },
+    "relPath": {
+      "description": "專案內的相對路徑，使用正斜線。不得為絕對路徑、不得含 `..` 片段、不得含反斜線。scene.json 中的路徑相對於該 scene 目錄；以 `@/` 開頭表示相對於專案根目錄（例如 `@/assets/logo.png`）。",
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!(.*/)?\\.\\.(/|$))[^\\\\]+$"
+    },
+    "updatedBy": {
+      "description": "最後寫入者：agent（Agent 經 state.mjs）、user（Web UI 或手動）、companion、mcp。",
+      "enum": ["agent", "user", "companion", "mcp"]
+    },
+    "ttsProvider": {
+      "description": "見 SPEC §7.4。",
+      "enum": ["edge-tts", "azure", "openai", "elevenlabs", "piper", "system", "manual"]
+    },
+    "extensions": {
+      "description": "以 `x-` 開頭的欄位保留給使用者或第三方工具自訂，Agent 必須原樣保留。",
+      "patternProperties": {
+        "^x-": true
+      }
+    }
+  }
+}

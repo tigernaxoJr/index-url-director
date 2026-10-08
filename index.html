@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="zh-Hant" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AOFA — 代理卸載式前端架構 (Agent-Offloaded Frontend Architecture)</title>
+    <meta name="description" content="後端不跑 AI 的現代 AI 產品架構：靜態協議皮囊，由使用者既有的 Coding Agent 驅動。" />
+    <script>
+      // 保持向後相容：轉發舊版 Video workbench 伴侶配對 Token
+      if (/[#&]pair=/.test(location.hash)) location.replace('./video/' + location.hash)
+    </script>
+    <script type="module" crossorigin src="/assets/index-Cp_BulmD.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-Cwx2MOxU.css">
+  </head>
+  <body class="bg-slate-50 text-slate-900 antialiased selection:bg-indigo-500 selection:text-white dark:bg-slate-950 dark:text-slate-100">
+    <!-- 頂部導航列 -->
+    <header class="sticky top-0 z-30 border-b border-slate-200/80 bg-white/80 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-900/80">
+      <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+        <a href="#" class="flex items-center gap-2.5 font-bold tracking-tight text-slate-900 dark:text-white">
+          <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 font-mono text-sm text-white shadow-sm">A</span>
+          <span class="text-lg">AOFA</span>
+          <span class="hidden rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 sm:inline dark:bg-slate-800 dark:text-slate-300">
+            Agent-Offloaded Frontend Architecture
+          </span>
+        </a>
+
+        <nav class="flex items-center gap-4 text-xs font-medium sm:gap-6 sm:text-sm">
+          <a href="#workbenches" class="text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors">範例工具</a>
+          <a href="#principles" class="hidden text-slate-600 hover:text-indigo-600 sm:inline dark:text-slate-400 dark:hover:text-indigo-400 transition-colors">核心原則</a>
+          <a href="#comparison" class="hidden text-slate-600 hover:text-indigo-600 md:inline dark:text-slate-400 dark:hover:text-indigo-400 transition-colors">架構對比</a>
+          <a href="#modes" class="text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors">三種模式</a>
+          <a href="#docs" class="text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors">規格文獻</a>
+          <a
+            href="https://github.com/tigernaxojr/aofa"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
+          >
+            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" /></svg>
+            GitHub
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="space-y-24 py-12 sm:py-20">
+      <!-- 英雄區 (Hero Section) -->
+      <section class="mx-auto max-w-5xl px-4 text-center sm:px-6">
+        <div class="inline-flex items-center gap-2 rounded-full border border-indigo-200/80 bg-indigo-50/70 px-3.5 py-1 text-xs font-semibold text-indigo-700 dark:border-indigo-800/80 dark:bg-indigo-950/40 dark:text-indigo-300">
+          <span class="inline-block h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></span>
+          現代 AI 產品架構模式 · Architecture Pattern
+        </div>
+
+        <h1 class="mt-6 text-3xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl text-slate-900 dark:text-white">
+          後端不跑 AI 的<br class="hidden sm:inline" />
+          <span class="bg-gradient-to-r from-indigo-600 via-sky-500 to-emerald-500 bg-clip-text text-transparent">
+            代理卸載式前端架構
+          </span>
+        </h1>
+
+        <p class="mx-auto mt-6 max-w-3xl text-base leading-relaxed text-slate-600 sm:text-lg dark:text-slate-300">
+          打造 AI 產品，卻不必在後端扛 GPU 與巨額推論成本。網頁應用只是一份靜態的<strong>協議皮囊（Protocol Shell）</strong>；
+          <strong>使用者手上既有的 Coding Agent</strong>（Claude Code、Codex、Cursor、Pi 等）才是負責推理與執行的心臟引擎。
+        </p>
+
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+          <a
+            href="#workbenches"
+            class="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 active:bg-indigo-700 transition-colors"
+          >
+            體驗範例工具 (Slide / Video) ↓
+          </a>
+          <a
+            href="./docs/architecture.zh-TW.md"
+            class="rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
+          >
+            閱讀完整架構規格書 →
+          </a>
+        </div>
+      </section>
+
+      <!-- 架構運作圖 (Shell & Heart Architecture Flow) -->
+      <section class="mx-auto max-w-5xl px-4 sm:px-6">
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10 dark:border-slate-800 dark:bg-slate-900">
+          <div class="text-center">
+            <span class="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Core Architecture</span>
+            <h2 class="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">皮囊與心臟：零推論協同機制</h2>
+            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              前端從不執行模型，而是將規格與 Schema 寫入本機資料夾；使用者的 Agent 讀取規格、完成工作並寫回產物。
+            </p>
+          </div>
+
+          <div class="mt-10 grid grid-cols-1 items-stretch gap-4 md:grid-cols-3">
+            <!-- Node 1: Shell -->
+            <div class="flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-800/50">
+              <div>
+                <span class="rounded-md bg-sky-100 px-2.5 py-0.5 text-xs font-bold text-sky-700 dark:bg-sky-950 dark:text-sky-300">
+                  Shell 皮囊
+                </span>
+                <h3 class="mt-3 text-lg font-bold text-slate-900 dark:text-white">靜態 Web UI</h3>
+                <p class="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                  純靜態前端，託管於 CDN / GitHub Pages。不設後端伺服器，不儲存任何使用者資料。
+                </p>
+                <ul class="mt-4 space-y-1.5 text-xs text-slate-500 dark:text-slate-400">
+                  <li>✓ 視覺化工作台與編輯器</li>
+                  <li>✓ JSON Schema 契約即時校驗</li>
+                  <li>✓ 零後端維運與零邊際算力成本</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Node 2: Bus (SSOT) -->
+            <div class="flex flex-col justify-between rounded-2xl border-2 border-indigo-500/30 bg-indigo-50/40 p-6 dark:border-indigo-500/30 dark:bg-indigo-950/20">
+              <div>
+                <span class="rounded-md bg-indigo-100 px-2.5 py-0.5 text-xs font-bold text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300">
+                  Bus · SSOT 匯流排
+                </span>
+                <h3 class="mt-3 text-lg font-bold text-slate-900 dark:text-white">本機資料夾</h3>
+                <p class="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                  透過標準 <strong>File System Access API</strong> 授權，本機檔案系統即為唯一真理來源。
+                </p>
+                <ul class="mt-4 space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+                  <li>✓ <code>*.project.json</code> 專案設定</li>
+                  <li>✓ <code>*.activity.json</code> Agent 即時動態</li>
+                  <li>✓ 產物檔案（PDF, MP4, Markdown, SVG）</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Node 3: Heart Engine -->
+            <div class="flex flex-col justify-between rounded-2xl border border-emerald-500/30 bg-emerald-50/40 p-6 dark:border-emerald-500/30 dark:bg-emerald-950/20">
+              <div>
+                <span class="rounded-md bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300">
+                  Heart 心臟 · 引擎
+                </span>
+                <h3 class="mt-3 text-lg font-bold text-slate-900 dark:text-white">使用者的 Coding Agent</h3>
+                <p class="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                  由使用者現有的 Agent 驅動執行（Claude Code、Cursor、Windsurf 或本機開源模型）。
+                </p>
+                <ul class="mt-4 space-y-1.5 text-xs text-slate-600 dark:text-slate-300">
+                  <li>✓ 深度邏輯推理與結構化生成</li>
+                  <li>✓ 調用本機工具 (Playwright, FFmpeg, TTS)</li>
+                  <li>✓ <strong>推論費自備 (BYOA)</strong>，服務商零負擔</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 實作工作台展間 (Live Workbenches) -->
+      <section id="workbenches" class="mx-auto max-w-6xl px-4 sm:px-6">
+        <div class="flex flex-wrap items-baseline justify-between gap-4 border-b border-slate-200 pb-5 dark:border-slate-800">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Reference Implementations</span>
+            <h2 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">官方參考實作工具 (Workbenches)</h2>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md">
+            以下工具皆遵循 AOFA 規範建置，具備獨立的前端工作台、協議 Schema、Agent Skills 與範本。
+          </p>
+        </div>
+
+        <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <!-- Slide Studio Card -->
+          <div class="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm hover:border-indigo-400 transition-all dark:border-slate-800 dark:bg-slate-900 dark:hover:border-indigo-500">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                  【模式 A：純工作台典範】
+                </span>
+                <span class="font-mono text-xs text-slate-400">/slide/</span>
+              </div>
+
+              <h3 class="mt-4 text-xl font-bold text-slate-900 dark:text-white">Slide Studio 簡報工作台</h3>
+              <p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                以 <strong>Slidev</strong> 為引擎，發揮 Coding Agent 前端視覺能力（HTML/Tailwind、向量 SVG 架構圖、Three.js 3D 組件），
+                透過純 File System Access API 零伴侶零常駐，本機自動輸出無損向量 PDF。
+              </p>
+
+              <div class="mt-5 flex flex-wrap gap-1.5">
+                <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">Slidev Markdown</span>
+                <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">Three.js 3D 視覺</span>
+                <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">原生向量 SVG</span>
+                <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">Playwright 向量 PDF</span>
+              </div>
+            </div>
+
+            <div class="mt-8 border-t border-slate-100 pt-5 dark:border-slate-800">
+              <a
+                href="./slide/"
+                class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 active:bg-indigo-700 transition-colors"
+              >
+                進入 Slide Studio →
+              </a>
+            </div>
+          </div>
+
+          <!-- Video Studio Card -->
+          <div class="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm hover:border-sky-400 transition-all dark:border-slate-800 dark:bg-slate-900 dark:hover:border-sky-500">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 dark:bg-sky-950/60 dark:text-sky-300">
+                  【模式 B：伴侶增強典範】
+                </span>
+                <span class="font-mono text-xs text-slate-400">/video/</span>
+              </div>
+
+              <h3 class="mt-4 text-xl font-bold text-slate-900 dark:text-white">Video Studio 影片工作台</h3>
+              <p class="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                將產品網址或故事文本，轉化為附帶繁中擬真語音配音、Playwright 網頁動態錄影與 FFmpeg 合成的高質感展示影片。
+                搭配微型 localhost WebSocket 伴侶，支援網頁一鍵重跑與即時回報。
+              </p>
+
+              <div class="mt-5 flex flex-wrap gap-1.5">
+                <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">分鏡腳本生成</span>
+                <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">Edge TTS 語音合成</span>
+                <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">Playwright 畫面捕獲</span>
+                <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">FFmpeg 影片組裝</span>
+              </div>
+            </div>
+
+            <div class="mt-8 border-t border-slate-100 pt-5 dark:border-slate-800">
+              <a
+                href="./video/"
+                class="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-5 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-sky-500 active:bg-sky-700 transition-colors"
+              >
+                進入 Video Studio →
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 四大核心原則 (Four Principles) -->
+      <section id="principles" class="mx-auto max-w-6xl px-4 sm:px-6">
+        <div class="text-center">
+          <span class="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Guiding Rules</span>
+          <h2 class="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">四大核心原則</h2>
+          <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">符合以下四點，才算真正的 AOFA 架構。</p>
+        </div>
+
+        <div class="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <span class="font-mono text-2xl font-black text-indigo-600/40 dark:text-indigo-400/40">01</span>
+            <h3 class="mt-2 font-bold text-slate-900 dark:text-white">零推論控制層</h3>
+            <p class="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+              應用層不跑模型、不做重度運算。無論千人還是百萬人造訪，服務商的邊際算力成本始終趨近於零。
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <span class="font-mono text-2xl font-black text-indigo-600/40 dark:text-indigo-400/40">02</span>
+            <h3 class="mt-2 font-bold text-slate-900 dark:text-white">Schema 即合約</h3>
+            <p class="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+              UI 與 Agent 透過開放標準的 JSON Schema 協作，而非封閉私有 API。前端嚴格驗證 Agent 產出的每一項內容。
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <span class="font-mono text-2xl font-black text-indigo-600/40 dark:text-indigo-400/40">03</span>
+            <h3 class="mt-2 font-bold text-slate-900 dark:text-white">檔案系統即匯流排</h3>
+            <p class="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+              本機資料夾是唯一真理來源（SSOT）。UI 以輕量檔案中繼資料特徵碼偵測變更，維持極簡且堅不可摧的狀態同步。
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <span class="font-mono text-2xl font-black text-indigo-600/40 dark:text-indigo-400/40">04</span>
+            <h3 class="mt-2 font-bold text-slate-900 dark:text-white">本地優先·邊界自決</h3>
+            <p class="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+              使用者資料完全不經服務商伺服器。唯一的第三方是使用者自選的 LLM 方案；若改用 Ollama 等本機模型則完全離線。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 架構對比表 (Comparison Table) -->
+      <section id="comparison" class="mx-auto max-w-5xl px-4 sm:px-6">
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10 dark:border-slate-800 dark:bg-slate-900">
+          <div class="text-center">
+            <span class="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Paradigm Shift</span>
+            <h2 class="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">雲端 GenAI SaaS vs. AOFA</h2>
+            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              AOFA 並未讓推論變免費，而是將算力移至使用者已付費的 Agent 訂閱或自建硬體上，解開商業模式的死結。
+            </p>
+          </div>
+
+          <div class="mt-8 overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead>
+                <tr class="border-b border-slate-200 text-xs font-semibold uppercase text-slate-400 dark:border-slate-800">
+                  <th class="py-3 pr-4">評比維度</th>
+                  <th class="py-3 px-4 text-slate-500">傳統雲端 GenAI SaaS</th>
+                  <th class="py-3 pl-4 text-indigo-600 dark:text-indigo-400">AOFA 代理卸載架構</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-xs sm:text-sm dark:divide-slate-800">
+                <tr>
+                  <td class="py-3.5 pr-4 font-semibold text-slate-900 dark:text-white">主機託管</td>
+                  <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400">GPU 主機、向量資料庫、高昂流量費</td>
+                  <td class="py-3.5 pl-4 font-medium text-emerald-600 dark:text-emerald-400">CDN 上的純靜態檔案（GitHub Pages）</td>
+                </tr>
+                <tr>
+                  <td class="py-3.5 pr-4 font-semibold text-slate-900 dark:text-white">推論算力成本</td>
+                  <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400">服務商自行吸收墊付，再以訂閱制轉嫁</td>
+                  <td class="py-3.5 pl-4 font-medium text-emerald-600 dark:text-emerald-400">使用者自備 Agent（BYOA）或本機模型</td>
+                </tr>
+                <tr>
+                  <td class="py-3.5 pr-4 font-semibold text-slate-900 dark:text-white">使用者資料隱私</td>
+                  <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400">商業機密與隱私上傳並儲存於廠商雲端</td>
+                  <td class="py-3.5 pl-4 font-medium text-emerald-600 dark:text-emerald-400">100% 留在使用者本機磁碟，完全不出境</td>
+                </tr>
+                <tr>
+                  <td class="py-3.5 pr-4 font-semibold text-slate-900 dark:text-white">產物透明可控性</td>
+                  <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400">黑盒產物，不滿意只能重新碰運氣生成</td>
+                  <td class="py-3.5 pl-4 font-medium text-emerald-600 dark:text-emerald-400">透明標準檔案（MD, SVG, Vue, PDF），隨時可手改</td>
+                </tr>
+                <tr>
+                  <td class="py-3.5 pr-4 font-semibold text-slate-900 dark:text-white">系統運維負擔</td>
+                  <td class="py-3.5 px-4 text-slate-600 dark:text-slate-400">7x24 小時後端集群監控、斷線與負載維護</td>
+                  <td class="py-3.5 pl-4 font-medium text-emerald-600 dark:text-emerald-400">零後端伺服器，無需任何維運人員</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 三種通訊模式 (Three Communication Modes) -->
+      <section id="modes" class="mx-auto max-w-6xl px-4 sm:px-6">
+        <div class="text-center">
+          <span class="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Progressive Adoption</span>
+          <h2 class="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">三種漸進式通訊模式</h2>
+          <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">從極簡零設定到多團隊協同，依應用複雜度彈性選擇。</p>
+        </div>
+
+        <div class="mt-10 grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 font-bold text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
+              A
+            </div>
+            <h3 class="mt-4 font-bold text-slate-900 dark:text-white">模式 A：純工作台模式</h3>
+            <p class="mt-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">代表實作：Slide Studio</p>
+            <p class="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+              檔案驅動。UI 輪詢檔案特徵碼，並提供指令讓使用者貼給 Agent 執行。使用者不需要安裝任何常駐程式或額外環境。
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-50 font-bold text-sky-600 dark:bg-sky-950 dark:text-sky-400">
+              B
+            </div>
+            <h3 class="mt-4 font-bold text-slate-900 dark:text-white">模式 B：伴侶增強模式</h3>
+            <p class="mt-1 text-xs font-semibold text-sky-600 dark:text-sky-400">代表實作：Video Studio</p>
+            <p class="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+              在 <code>127.0.0.1</code> 執行微型 WebSocket 伴侶，以 Origin 檢查與 Token 安全配對，在網頁上提供一鍵觸發指令重跑與主動推播。
+            </p>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 font-bold text-purple-600 dark:bg-purple-950 dark:text-purple-400">
+              C
+            </div>
+            <h3 class="mt-4 font-bold text-slate-900 dark:text-white">模式 C：具後端混合架構</h3>
+            <p class="mt-1 text-xs font-semibold text-purple-600 dark:text-purple-400">企業/團隊擴充模式</p>
+            <p class="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+              輕量雲端控制平面只負責帳號認證、權限管理與計費；所有重度運算與敏感檔案資料始終留在使用者本機（自備 Agent，BYOA）。
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 規格文獻與論文 (Docs & Paper) -->
+      <section id="docs" class="mx-auto max-w-6xl px-4 sm:px-6">
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10 dark:border-slate-800 dark:bg-slate-900">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Publications & Resources</span>
+            <h2 class="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">規格文獻與論文</h2>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              完整的技術規範定義、學術論文提案與架構深度長文。
+            </p>
+          </div>
+
+          <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <a
+              href="./docs/architecture.zh-TW.md"
+              class="flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50 p-5 hover:border-indigo-400 transition-colors dark:border-slate-800 dark:bg-slate-800/40 dark:hover:border-indigo-500"
+            >
+              <div>
+                <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">Specification</span>
+                <h3 class="mt-2 font-bold text-slate-900 dark:text-white">架構說明規格 (繁中)</h3>
+                <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  完整闡述核心哲學、四項原則、三種通訊模式、安全性限制與未來演進。
+                </p>
+              </div>
+              <span class="mt-4 text-xs font-semibold text-indigo-600 dark:text-indigo-400">閱讀規格書 →</span>
+            </a>
+
+            <a
+              href="./posts/2026-10-introducing-aofa.md"
+              class="flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50 p-5 hover:border-indigo-400 transition-colors dark:border-slate-800 dark:bg-slate-800/40 dark:hover:border-indigo-500"
+            >
+              <div>
+                <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">Deep Dive</span>
+                <h3 class="mt-2 font-bold text-slate-900 dark:text-white">Introducing AOFA (英文)</h3>
+                <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  深入探討為什麼後端不跑 AI 是可行的，以及商業模式與技術權衡。
+                </p>
+              </div>
+              <span class="mt-4 text-xs font-semibold text-indigo-600 dark:text-indigo-400">閱讀技術長文 →</span>
+            </a>
+
+            <a
+              href="./paper/proposal.md"
+              class="flex flex-col justify-between rounded-2xl border border-slate-200 bg-slate-50 p-5 hover:border-indigo-400 transition-colors dark:border-slate-800 dark:bg-slate-800/40 dark:hover:border-indigo-500"
+            >
+              <div>
+                <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">Academic</span>
+                <h3 class="mt-2 font-bold text-slate-900 dark:text-white">學術論文提案草稿</h3>
+                <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Agent-Offloaded Frontend Architecture 的學術格式形式化定義與驗證計畫。
+                </p>
+              </div>
+              <span class="mt-4 text-xs font-semibold text-indigo-600 dark:text-indigo-400">檢視論文提案 →</span>
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- 頁尾 (Footer) -->
+    <footer class="border-t border-slate-200 bg-white py-12 text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+      <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-4 sm:flex-row sm:px-6">
+        <div>
+          <p class="text-xs">
+            © 2026 tigernaxo. 本作品採用
+            <a href="./LICENSE" class="underline hover:text-slate-800 dark:hover:text-slate-200">創用 CC 姓名標示 4.0 國際授權條款 (CC BY 4.0)</a>。
+          </p>
+          <p class="mt-1 text-xs text-slate-400">
+            Deployed on GitHub Pages · Zero Backend · Local-First Architecture
+          </p>
+        </div>
+
+        <div class="flex items-center gap-4 text-xs">
+          <a href="./slide/" class="hover:text-indigo-600 dark:hover:text-indigo-400">Slide Studio</a>
+          <span>·</span>
+          <a href="./video/" class="hover:text-indigo-600 dark:hover:text-indigo-400">Video Studio</a>
+          <span>·</span>
+          <a href="https://github.com/tigernaxojr/aofa" class="hover:text-indigo-600 dark:hover:text-indigo-400">GitHub</a>
+        </div>
+      </div>
+    </footer>
+
+  </body>
+</html>

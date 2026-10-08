@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "activity.schema.json",
+  "title": "SlideActivity",
+  "type": "object",
+  "required": ["message", "step", "updatedAt"],
+  "properties": {
+    "message": { "type": "string", "minLength": 1 },
+    "step": {
+      "type": "string",
+      "enum": ["init", "outline", "draft", "visual", "export", "idle"]
+    },
+    "currentSlide": { "type": ["integer", "null"] },
+    "totalSlides": { "type": ["integer", "null"] },
+    "waitingForUser": { "type": "boolean", "default": false },
+    "updatedAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}
